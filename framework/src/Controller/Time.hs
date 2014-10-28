@@ -35,30 +35,34 @@ updatePlayer :: Float -> Ship -> World -> (Ship, Point)
 updatePlayer time player@(Ship {..}) (World {movementAction, rotateAction, worldWidth, worldHeight})
     = (player {
     sPos = newPos,
-    sRot = rotate rotateAction 4,
+    sRot = rotate rotateAction time player,
     sVelocity = newVelocity,
-    sForce = calcThrust movementAction sRot 2000
+    sForce = calcThrust movementAction player
     }, newPos)
     where
     newVelocity = calcVelocity time player
     --Calculate the position
     newPos = clampP updatePosition (0, 0) (worldWidth, worldHeight)
     updatePosition = sPos + newVelocity .* time
-    --Rotate the ship
-    rotate RotateRight sp = sRot - sp * time
-    rotate NoRotation _   = sRot
-    rotate RotateLeft sp  = sRot + sp * time
 
 -- | Functions to calculate force, velocity
 
 --Calculate the force and direction
-calcThrust :: MovementAction -> Float -> Float -> Point
-calcThrust Thrust rot pow = (cos rot, sin rot) .* pow
-calcThrust NoMovement _ _ = (0, 0)
+calcThrust :: MovementAction -> Ship -> Point
+calcThrust Thrust (Ship {sRot, sPower}) = (cos sRot, sin sRot) .* sPower
+calcThrust NoMovement _ _               = (0, 0)
 
 --Calculate the velocity
 calcVelocity :: Float -> Ship -> Point
 calcVelocity time (Ship {..}) = (sVelocity + sForce .* (1 / sMass)) ./ (1 + sFriction * time)
+
+--Rotate a ship
+rotateShip :: RotateAction -> Float -> Ship -> Float
+rotateShip RotateRight time (Ship {sRot, sRotSpeed}) = sRot - sRotSpeed * time
+rotateShip NoRotation _ _                            = sRot
+rotateShip RotateLeft time (Ship {sRot, sRotSpeed})  = sRot + sRotSpeed * time
+
+-- | Bullet updating
 
 --updateEnemies :: Float -> Ship -> World -> Ship
 --updateEnemies = id

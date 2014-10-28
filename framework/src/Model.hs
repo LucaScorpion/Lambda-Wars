@@ -40,7 +40,9 @@ sRot      :: Float,
 sForce    :: Point,
 sVelocity :: Point,
 sMass     :: Float,
-sFriction :: Float
+sFriction :: Float,
+sRotSpeed :: Float,
+sPower    :: Float
 }
 
 data Bullet = Bullet {
@@ -78,7 +80,9 @@ sRot = degToRad 270,
 sForce = (0,0),
 sVelocity = (0,0),
 sMass = 3.5,
-sFriction = 3
+sFriction = 3,
+sRotSpeed = 4,
+sPower = 2000
 }
 
 							
