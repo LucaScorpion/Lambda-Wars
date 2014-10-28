@@ -27,7 +27,7 @@ timeHandler time world@(World {..}) = world {
                                       }
                                       where
                                       updPlayer = updatePlayer time player world
-                                      updEnemies = map (updateEnemies) enemies 
+                                      updEnemies = map (updateEnemies time world) enemies 
                                       updBullets = map (updateBullets) bullets
 
 updatePlayer :: Float -> Ship -> World -> (Ship, Point)
@@ -51,6 +51,7 @@ updatePlayer time player@(Ship {..}) world@(World {movementAction, rotateAction}
     rotate NoRotation _ = sRot
     rotate RotateLeft sp = sRot + sp * time
       
+updatePlayer :: Float -> Ship -> World -> (Ship, Point)
 updateEnemies = id
 
 updBullets = id
