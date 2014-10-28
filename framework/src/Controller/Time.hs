@@ -57,8 +57,15 @@ updateEnemies = id
 updBullets = id
 
 -- | Helper functions
+
+--Clamp a float
 clampF :: Float -> Float -> Float -> Float
-clampF value mn mx = 
+clampF value mn mx = max (min value mx) mn
+
+--Clamp a point
+clampP :: Point -> Point -> Point -> Point
+clampP value mn mx = (clampF (fst value) (fst mn) (fst mx),
+                     clampF (snd value) (snd mn) (snd mx))
 
 -- | Operators
 
