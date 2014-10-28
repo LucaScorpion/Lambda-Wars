@@ -31,30 +31,31 @@ timeHandler time world@(World {..}) = world {
                                       updBullets = map (updateBullets) bullets
 
 updatePlayer :: Float -> Ship -> World -> (Ship, Point)
-updatePlayer time player@(Ship {..}) world@(World {movementAction, rotateAction})
+updatePlayer time player@(Ship {..}) (World {movementAction, rotateAction, worldWidth, worldHeight})
     = (player {
-    sPos = updatePosition,
+    sPos = newPos,
     sRot = rotate rotateAction 4,
     sVelocity = updateVelocity 0.3 2,
     sForce = calcThrust movementAction 2000
-    }, updatePosition)
+    }, newPos)
 	where
     --Calculate the thrust
     calcThrust Thrust pow = (cos sRot, sin sRot) .* pow
     calcThrust NoMovement _ = (0, 0)
     --Calculate the position
+    newPos = clampP updatePosition (0, 0) (worldWidth, worldHeight)
     updatePosition = sPos + sVelocity .* time
-	--Update velocity and force
+    --Update velocity and force
     updateVelocity iMass fric = (sVelocity + sForce .* iMass) ./ (1 + fric * time)
-	--Direction
+    --Direction
     rotate RotateRight sp = sRot - sp * time
     rotate NoRotation _ = sRot
     rotate RotateLeft sp = sRot + sp * time
       
-updatePlayer :: Float -> Ship -> World -> (Ship, Point)
+--updateEnemies :: Float -> Ship -> World -> Ship
 updateEnemies = id
 
-updBullets = id
+updateBullets = id
 
 -- | Helper functions
 
