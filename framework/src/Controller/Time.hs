@@ -28,7 +28,7 @@ timeHandler time world@(World {..}) = world {
                                       where
                                       updPlayer = updatePlayer time player world
                                       --updEnemies = map (updateEnemies time world) enemies 
-                                      updBullets = updateBullets time bullets
+                                      updBullets = updateBullets time bullets updPlayer
 
 --Update the player ship
 updatePlayer :: Float -> Ship -> World -> (Ship, Point)
@@ -67,9 +67,13 @@ rotateShip RotateLeft time (Ship {sRot, sRotSpeed})  = sRot + sRotSpeed * time
 --updateEnemies :: Float -> Ship -> World -> Ship
 --updateEnemies = id
 --update method for the fired bullets
-updateBullets time bullets@(x:xs) = map (\Bullet{..} -> bTimer <= 0 if x updFired) bullets >>> 
+updateBullets time bullets@(x:xs) (Ship{sRot},playpos) = if Shootaction == Shoot 
+                                                         then Bullet{bPos = playpos,bVelocity = (cos sRot, sin sRot) .* 20, bTimer = 5 } : map updFired &delOldBullets bullets 
+														 else map updFired &delOldBullets bullets
                    where
-                   updFired bullet@(Bullet{..}) = bullet {bPos = bPos .+. bVelocity, bTimer = if bTimer <= 0 then  bTimer - time}
+                   delOldBullets [] = []
+				   delOldBullets (y@(Bullet{..}):ys) = if bTimer > 0 then y:delOldBullets ys else delOldBullets ys
+                   updFired bullet@(Bullet{..}) = bullet {bPos = bPos .+. bVelocity, bTimer = bTimer - time}
 
 -- | Helper functions
 
