@@ -67,6 +67,7 @@ rotateShip RotateLeft time (Ship {sRot, sRotSpeed})  = sRot + sRotSpeed * time
 --updateEnemies :: Float -> Ship -> World -> Ship
 --updateEnemies = id
 --update method for the fired bullets
+updateBullets :: Float -> [Bullet] -> (Ship,Point) -> [Bullet]
 updateBullets time bullets@(x:xs) (Ship{sRot},playpos) = if Shootaction == Shoot 
                                                          then Bullet{bPos = playpos,bVelocity = (cos sRot, sin sRot) .* 20, bTimer = 5 } : map updFired &delOldBullets bullets 
 														 else map updFired &delOldBullets bullets
