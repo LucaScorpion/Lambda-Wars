@@ -38,7 +38,9 @@ sSprite   :: Picture,
 sPos      :: Point,
 sRot      :: Float,
 sForce    :: Point,
-sVelocity :: Point
+sVelocity :: Point,
+sMass     :: Float,
+sFriction :: Float
 }
 
 data Bullet = Bullet {
@@ -60,11 +62,24 @@ initial seed plSpr = generateStars newWorld
                             --Background
 						    stars=[],
                             --Player
-							player = Ship { sSprite = plSpr, sPos = (0,0), sRot = degToRad 270, sForce = (0,0), sVelocity = (0,0) },
+							player = createPlayer plSpr,
                             enemies = [],
                             bullets = [],
                             cameraPos = (0, 0)
                             }
+
+--Create a player ship
+createPlayer :: Picture -> Ship
+createPlayer plSpr = Ship {
+sSprite = plSpr,
+sPos = (0,0),
+sRot = degToRad 270,
+sForce = (0,0),
+sVelocity = (0,0),
+sMass = 3.5,
+sFriction = 3
+}
+
 							
 -- adsfkljaf;kljakljfakljakjafdskjfdsakjfdsakjfdsa';klj
 generateStars :: World -> World
