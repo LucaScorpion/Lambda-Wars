@@ -21,14 +21,14 @@ import Model
 timeHandler :: Float -> World -> World
 timeHandler time world@(World {..}) = world {
                                       player = fst updPlayer,
-									  enemies = updEnemies,
+									 -- enemies = updEnemies,
 									  bullets = updBullets,
                                       cameraPos = snd updPlayer
                                       }
                                       where
                                       updPlayer = updatePlayer time player world
-                                      updEnemies = map (updateEnemies time world) enemies 
-                                      updBullets = map (updateBullets) bullets
+                                      --updEnemies = map (updateEnemies time world) enemies 
+                                      updBullets = updateBullets time bullets
 
 --Update the player ship
 updatePlayer :: Float -> Ship -> World -> (Ship, Point)
@@ -61,9 +61,11 @@ calcVelocity :: Float -> Ship -> Point
 calcVelocity time (Ship {..}) = (sVelocity + sForce .* (1 / sMass)) ./ (1 + sFriction * time)
 
 --updateEnemies :: Float -> Ship -> World -> Ship
-updateEnemies = id
-
-updateBullets = id
+--updateEnemies = id
+--update method for the fired bullets
+updateBullets time bullets@(x:xs) = map (\Bullet{..} -> bTimer <= 0 if x updFired) bullets >>> 
+                   where
+                   updFired bullet@(Bullet{..}) = bullet {bPos = bPos .+. bVelocity, bTimer = if bTimer <= 0 then  bTimer - time}
 
 -- | Helper functions
 
@@ -79,6 +81,7 @@ clampP value mn mx = (clampF (fst value) (fst mn) (fst mx),
 -- | Operators
 
 infixl 7 .*, .*., ./
+infixl 6 .+., .-.
 
 --Multiply a point and a float
 (.*) :: Point -> Float -> Point
@@ -91,3 +94,11 @@ infixl 7 .*, .*., ./
 --Divide a point by a float
 (./) :: Point -> Float -> Point
 (x, y) ./ f = (x / f, y / f)
+
+--Add two points
+(.+.) :: Point -> Point -> Point
+(x, y) .+. (z, w) = (x + z, y + w)
+
+--Substract two points
+(.-.) :: Point -> Point -> Point
+(x, y) .-. (z, w) = (x - z, y - w)

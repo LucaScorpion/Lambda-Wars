@@ -45,7 +45,8 @@ sFriction :: Float
 
 data Bullet = Bullet {
 bPos      :: Point,
-bVelocity :: Point
+bVelocity :: Point,
+bTimer    :: Float
 }
 
 initial :: Int -> Picture -> World
