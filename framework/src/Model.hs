@@ -79,10 +79,10 @@ sPos = (0,0),
 sRot = degToRad 270,
 sForce = (0,0),
 sVelocity = (0,0),
-sMass = 3.5,
+sMass = 50,
 sFriction = 3,
 sRotSpeed = 4,
-sPower = 2000
+sPower = 100
 }
 
 							
