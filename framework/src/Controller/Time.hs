@@ -29,7 +29,7 @@ timeHandler time world@(World {..}) = world {
                                       nextSpawn = if nextSpawn <= 0 then spawnTime else nextSpawn - time
                                       }
                                       where
-                                      spawnPos = randomP (-1000,-1000) (1000,1000) rndGen
+                                      spawnPos = randomP (-1000,1000) (-1000,1000) rndGen
                                       newEnemy = if nextSpawn <= 0 then Just (createEnemy (fst spawnPos) (enemySpr !! 0)) else Nothing
                                       updPlayer = updatePlayer time player world
                                       updEnemies = map (updateEnemies time world) (updateEnemyList newEnemy enemies)
