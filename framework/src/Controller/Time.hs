@@ -115,16 +115,16 @@ spawnEnemy mShip enemies = case mShip of
 --Update an enemy ship
 updateEnemy :: Float -> World -> Ship -> Ship -> Ship
 updateEnemy time (World {..}) playert@(Ship {sPos = pPos}) enemy@(Ship {..}) = enemy {
-                                                  sPos = sPos,
-                                                  sRot = anglepe, -- normaliseAngle $ rotateShip rotR time enemy,
+                                                  sPos = newPos,
+                                                  sRot = rotation,
                                                   sVelocity = newVelocity,
                                                   sForce = calcThrust Thrust enemy
                                                   }
                                                   where
-                                                  rotR = (if anglepe >= pi || (anglepe < 0 && anglepe > -pi )  then RotateRight else rotL)
-                                                  rotL = (if anglepe <= -pi || (anglepe > 0 && anglepe < pi )  then RotateRight else NoRotation)
-                                                  anglepe = (acos ((fst anglep)/(sPos.<>.pPos)))
-                                                  anglep = sPos .-. pPos
+                                                  rotation = atan2 (dY / dist) (dX / dist)
+                                                  dist = sqrt (dX * dX + dY * dY)
+                                                  dY = (snd pPos) - (snd sPos)
+                                                  dX = (fst pPos) - (fst sPos)
                                                   newVelocity = calcVelocity time enemy
                                                   newPos = clampP updatePosition (-worldWidth / 2, -worldHeight / 2) (worldWidth / 2, worldHeight / 2)
                                                   updatePosition = sPos + newVelocity .* time
