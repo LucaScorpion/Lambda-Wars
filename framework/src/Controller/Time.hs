@@ -21,16 +21,16 @@ import PointOperators
 
 timeHandler :: Float -> World -> World
 timeHandler time world@(World {..}) = world {
-                                      rndGen = "iets"
+                                      rndGen = snd spawnPos,
                                       player = fst updPlayer,
                                       cameraPos = snd updPlayer,
                                       enemies = updEnemies,
                                       bullets = updBullets,
-                                      nextSpawn = if spawnEnemy then spawnTime else nextSpawn - time
+                                      nextSpawn = if nextSpawn <= 0 then spawnTime else nextSpawn - time
                                       }
                                       where
-                                      spawnPos = (0, 0)
-                                      newEnemy = if nextSpawn <= 0 then Just (createEnemy spawnPos enemySpr) else Nothing
+                                      spawnPos = randomP (-1000,-1000) (1000,1000) rndGen
+                                      newEnemy = if nextSpawn <= 0 then Just (createEnemy (fst spawnPos) (enemySpr!!1)) else Nothing
                                       updPlayer = updatePlayer time player world
                                       updEnemies = map (updateEnemies time world) (updateEnemyList newEnemy enemies)
                                       updBullets = updateBullets shootAction time (delOldBullets bullets) (createBullet player)
@@ -73,10 +73,10 @@ rotateShip RotateLeft time (Ship {sRot, sRotSpeed})  = sRot + sRotSpeed * time
 -- | Enemy updater
 
 --Create an enemy
-createEnemy :: StdGen -> Picture -> (Ship,StdGen)
-createEnemy g spr = (Ship {
+createEnemy :: Point -> Picture -> Ship
+createEnemy pos spr = Ship {
                       sSprite = spr,
-                      sPos = fst rndPos,
+                      sPos = pos,
                       sRot = degToRad 90,
                       sForce = (0,0),
                       sVelocity = (0,0),
@@ -85,10 +85,7 @@ createEnemy g spr = (Ship {
                       sRotSpeed = 4,
                       sPower = 500,
                       sAlive = True
-                      },
-                      snd rndPos)
-                      where
-                      rndPos = randomP g
+                      }
 
 --Update the list of enemies (remove dead ships)
 updateEnemyList mShip [] = case mShip of
@@ -110,7 +107,7 @@ updateEnemies time (World {..}) enemy@(Ship {..}) = enemy {
 
 --Check for collision between 2 ships
 checkCollision :: Ship -> Ship -> Bool
-checkCollision (Ship {sPos = pos1}) (Ship {sPos = pos2}) = False
+checkCollision (Ship {sPos = pos1}) (Ship {sPos = pos2}) = abs (pos1 .<>. pos2) <= 64
 
 -- | Bullet updater
 

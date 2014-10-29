@@ -25,3 +25,6 @@ infixl 6 .+., .-.
 --Substract two points
 (.-.) :: Point -> Point -> Point
 (x, y) .-. (z, w) = (x - z, y - w)
+
+(.<>.) :: Point -> Point -> Float
+(x, y) .<>. (z, w) = sqrt $ (x - z)**2 + (y - w)**2
