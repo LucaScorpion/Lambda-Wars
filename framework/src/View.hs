@@ -16,13 +16,13 @@ draw horizontalResolution verticalResolution (World{..})
     = pictures [
       pictures (map drawStars stars),
       translate (-fst cameraPos) (-snd cameraPos) 
-      (pictures  $ (color azure (rectangleWire 2000 2000)) : drawPlayer player : (map drawBullets bullets))
+      (pictures  $ (color azure (rectangleWire 2000 2000)) : drawShip player : pictures (map drawShip enemies) : (map drawBullets bullets))
       ]
       where
-      drawPlayer (Ship{..}) = translate
-	                          (fst sPos)
-                              (snd sPos)
-                              (rotate ((-radToDeg sRot) - 90) sSprite)
+      drawShip (Ship{..}) = translate
+	                        (fst sPos)
+                            (snd sPos)
+                            (rotate ((-radToDeg sRot) - 90) sSprite)
       drawStars ((x,y),z) = translate
                             (worldWidth * x - 0.7 * (fst cameraPos * z))
                             (worldHeight * y - 0.7 * (snd cameraPos * z))

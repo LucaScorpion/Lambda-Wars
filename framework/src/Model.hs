@@ -22,7 +22,9 @@ data World = World {
 		--Player and enemies
         player           :: Ship,
         enemies          :: [Ship],
-        spawnTimer       :: Float,
+        enemySpr         :: Picture,
+        spawnTime        :: Float,
+        nextSpawn        :: Float,
         bullets          :: [Bullet],
         reload           :: Float,
 		--Camera
@@ -44,7 +46,8 @@ sVelocity :: Point,
 sMass     :: Float,
 sFriction :: Float,
 sRotSpeed :: Float,
-sPower    :: Float
+sPower    :: Float,
+sAlive    :: Bool
 }
 
 data Bullet = Bullet {
@@ -66,10 +69,12 @@ initial seed plSpr = generateStars newWorld
 						    shootAction = DontShoot,
                             --Background
 						    stars=[],
-                            --Player
+                            --Player, enemies and bullets
 							player = createPlayer plSpr,
+                            enemySpr = plSpr,
                             enemies = [],
-                            spawnTimer = 5,
+                            spawnTime = 3,
+                            nextSpawn = 3,
                             bullets = [],
                             reload = 0,
                             cameraPos = (0, 0)
@@ -80,17 +85,18 @@ createPlayer :: Picture -> Ship
 createPlayer plSpr = Ship {
 sSprite = plSpr,
 sPos = (0,0),
-sRot = degToRad 270,
+sRot = degToRad 90,
 sForce = (0,0),
 sVelocity = (0,0),
 sMass = 50,
 sFriction = 3,
 sRotSpeed = 4,
-sPower = 500
+sPower = 500,
+sAlive = True
 }
 
 							
--- adsfkljaf;kljakljfakljakjafdskjfdsakjfdsakjfdsa';klj
+--Generate the stars
 generateStars :: World -> World
 generateStars world@(World {rndGen, stars}) = world {rndGen = fst rnds, stars = s}
                                             where 
