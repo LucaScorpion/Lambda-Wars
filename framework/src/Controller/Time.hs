@@ -21,6 +21,7 @@ import PointOperators
 
 timeHandler :: Float -> World -> World
 timeHandler time world@(World {..}) = world {
+                                      rndGen = "iets"
                                       player = fst updPlayer,
                                       cameraPos = snd updPlayer,
                                       enemies = updEnemies,
@@ -28,9 +29,8 @@ timeHandler time world@(World {..}) = world {
                                       nextSpawn = if spawnEnemy then spawnTime else nextSpawn - time
                                       }
                                       where
-                                      spawnEnemy = nextSpawn <= 0
                                       spawnPos = (0, 0)
-                                      newEnemy = if spawnEnemy then Just (createEnemy spawnPos enemySpr) else Nothing
+                                      newEnemy = if nextSpawn <= 0 then Just (createEnemy spawnPos enemySpr) else Nothing
                                       updPlayer = updatePlayer time player world
                                       updEnemies = map (updateEnemies time world) (updateEnemyList newEnemy enemies)
                                       updBullets = updateBullets shootAction time (delOldBullets bullets) (createBullet player)
@@ -73,19 +73,22 @@ rotateShip RotateLeft time (Ship {sRot, sRotSpeed})  = sRot + sRotSpeed * time
 -- | Enemy updater
 
 --Create an enemy
-createEnemy :: Point -> Picture -> Ship
-createEnemy pos spr = Ship {
-sSprite = spr,
-sPos = pos,
-sRot = degToRad 90,
-sForce = (0,0),
-sVelocity = (0,0),
-sMass = 50,
-sFriction = 3,
-sRotSpeed = 4,
-sPower = 500,
-sAlive = True
-}
+createEnemy :: StdGen -> Picture -> (Ship,StdGen)
+createEnemy g spr = (Ship {
+                      sSprite = spr,
+                      sPos = fst rndPos,
+                      sRot = degToRad 90,
+                      sForce = (0,0),
+                      sVelocity = (0,0),
+                      sMass = 50,
+                      sFriction = 3,
+                      sRotSpeed = 4,
+                      sPower = 500,
+                      sAlive = True
+                      },
+                      snd rndPos)
+                      where
+                      rndPos = randomP g
 
 --Update the list of enemies (remove dead ships)
 updateEnemyList mShip [] = case mShip of
