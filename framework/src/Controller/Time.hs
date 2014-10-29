@@ -22,14 +22,16 @@ import PointOperators
 timeHandler :: Float -> World -> World
 timeHandler time world@(World {..}) = world {
                                       player = fst updPlayer,
-									  -- enemies = updEnemies,
-									  bullets = updBullets,
+                                      -- enemies = updEnemies,
+                                      spawnTimer = spawnTimer - time,
+                                      bullets = fst updBullets,
+                                      reload = snd updBullets,
                                       cameraPos = snd updPlayer
                                       }
                                       where
                                       updPlayer = updatePlayer time player world
                                       --updEnemies = map (updateEnemies time world) enemies 
-                                      updBullets = updateBullets shootAction time (delOldBullets bullets) (fst updPlayer)
+                                      updBullets = updateBullets shootAction time reload (delOldBullets bullets) (fst updPlayer)
 
 --Update the player ship
 updatePlayer :: Float -> Ship -> World -> (Ship, Point)
@@ -69,14 +71,15 @@ rotateShip RotateLeft time (Ship {sRot, sRotSpeed})  = sRot + sRotSpeed * time
 --updateEnemies = id
 
 --Update method for the fired bullets
-updateBullets Shoot time bullets (Ship {..}) = newBullet : (map (updFired time) bullets)
+updateBullets Shoot time reload bullets (Ship {..}) = if reload > 0 then (map (updFired time) bullets, reload - time) else (newBullet : (map (updFired time) bullets), reloadTime)
                                              where
                                              newBullet = Bullet {
                                              bPos = sPos,
                                              bVelocity = (cos sRot, sin sRot) .* 20,
                                              bTimer = 5
                                              }
-updateBullets DontShoot time bullets _ = map (updFired time) bullets
+											 reloadTime = 0.5
+updateBullets DontShoot time reload bullets _ = (map (updFired time) bullets, reload - time)
 
 --Remove old bullets
 delOldBullets [] = []
