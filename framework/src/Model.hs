@@ -117,7 +117,7 @@ generateStars world@(World {rndGen, stars}) = world { rndGen = fst rnds, stars =
                                             newStars (0,g) = []
                                             newStars (a,g) = (fst p, fst f) : newStars (a-1,snd f)
                                                            where
-                                                           p = randomP (-1.1, -1.1) (1.1, 1.1) g
+                                                           p = randomP (-1.1, 1.1) (-1.1, 1.1) g
                                                            f = randomR (0.0, 1.0) (snd p)
 
 --Generate a random point
