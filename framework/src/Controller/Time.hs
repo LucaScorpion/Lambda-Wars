@@ -79,7 +79,9 @@ updateBullet DontShoot time bullets (Ship {..}) = map (updFired time) bullets
 
 --Remove old bullets
 delOldBullets [] = []
-delOldBullets (y@(Bullet{..}):ys) = if bTimer > 0 then y : delOldBullets ys else delOldBullets ys
+delOldBullets (y@(Bullet{..}):ys) = if bTimer > 0
+                                    then y : delOldBullets ys
+                                    else delOldBullets ys
 
 --Update a bullet
 updFired time bullet@(Bullet{..}) = bullet {
