@@ -82,7 +82,7 @@ sVelocity = (0,0),
 sMass = 50,
 sFriction = 3,
 sRotSpeed = 4,
-sPower = 100
+sPower = 500
 }
 
 							
