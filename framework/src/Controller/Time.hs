@@ -24,16 +24,19 @@ timeHandler time world@(World {..}) = world {
                                       rndGen = snd spawnPos,
                                       player = fst updPlayer,
                                       cameraPos = snd updPlayer,
-                                      enemies = updEnemies,
-                                      bullets = updBullets,
+                                      enemies = fst updCollisions,
+                                      bullets = snd updCollisions,
                                       nextSpawn = if nextSpawn <= 0 then spawnTime else nextSpawn - time
                                       }
                                       where
+                                      --Updated enemy and bullet list
+                                      updCollisions = checkCollisions updEnemies updBullets
+                                      updEnemies = map (updateEnemy time world) (spawnEnemy newEnemy enemies)
+                                      updBullets = updateBullets shootAction time (delOldBullets bullets) (createBullet player)
+                                      --Enemy spawning
                                       spawnPos = randomP (-1000,1000) (-1000,1000) rndGen
                                       newEnemy = if nextSpawn <= 0 then Just (createEnemy (fst spawnPos) (enemySpr !! 0)) else Nothing
                                       updPlayer = updatePlayer time player world
-                                      updEnemies = map (updateEnemies time world) (updateEnemyList newEnemy enemies)
-                                      updBullets = updateBullets shootAction time (delOldBullets bullets) (createBullet player)
 
 --Update the player ship
 updatePlayer :: Float -> Ship -> World -> (Ship, Point)
@@ -70,6 +73,23 @@ rotateShip RotateRight time (Ship {sRot, sRotSpeed}) = sRot - sRotSpeed * time
 rotateShip NoRotation _ (Ship {sRot})                = sRot
 rotateShip RotateLeft time (Ship {sRot, sRotSpeed})  = sRot + sRotSpeed * time
 
+-- | Collisions
+checkCollisions :: [Ship] -> [Bullet] -> ([Ship], [Bullet])
+checkCollisions enemies bullets = ([e | e <- filterNoBCol enemies], [b | b <- filterNoSCol bullets])
+                                where
+                                filterNoBCol = filter (\ s -> not $ bullCol s)
+                                bullCol ship = or (map (checkBulletCollision ship) bullets)
+                                filterNoSCol = filter (\ b -> not $ shipCol b)
+                                shipCol bullet = or (map (\ e -> checkBulletCollision e bullet) enemies)
+
+--Check for collision between 2 ships
+checkShipCollision :: Ship -> Ship -> Bool
+checkShipCollision (Ship {sPos = pos1}) (Ship {sPos = pos2}) = abs (pos1 .<>. pos2) <= 64
+
+--Check for collision between a ship and a bullet
+checkBulletCollision :: Ship -> Bullet -> Bool
+checkBulletCollision (Ship {sPos}) (Bullet {bPos}) = abs (sPos .<>. bPos) <= 32
+
 -- | Enemy updater
 
 --Create an enemy
@@ -87,31 +107,14 @@ createEnemy pos spr = Ship {
                       sAlive = True
                       }
 
---Update the list of enemies (remove dead ships)
-updateEnemyList mShip [] = case mShip of
-                           Nothing -> []
-                           Just ship -> [ship]
-updateEnemyList mShip (x@(Ship{sAlive}):xs) = case mShip of
-                                              Nothing -> newList
-                                              Just ship -> ship : newList
-                                            where
-                                            newList = if (sAlive)
-                                                      then x : updateEnemyList Nothing xs
-                                                      else updateEnemyList Nothing xs
+--Spawn an enemy
+spawnEnemy mShip enemies = case mShip of
+                           Nothing -> enemies
+                           Just ship -> ship : enemies
 
 --Update an enemy ship
-updateEnemies :: Float -> World -> Ship -> Ship
-updateEnemies time (World {..}) enemy@(Ship {..}) = enemy {
-                                                    sAlive = not (or (map (checkBulletCollision enemy) bullets))
-                                                    }
-
---Check for collision between 2 ships
-checkShipCollision :: Ship -> Ship -> Bool
-checkShipCollision (Ship {sPos = pos1}) (Ship {sPos = pos2}) = abs (pos1 .<>. pos2) <= 64
-
---Check for collision between a ship and a bullet
-checkBulletCollision :: Ship -> Bullet -> Bool
-checkBulletCollision (Ship {sPos}) (Bullet {bPos}) = abs (sPos .<>. bPos) <= 32
+updateEnemy :: Float -> World -> Ship -> Ship
+updateEnemy time (World {..}) enemy@(Ship {..}) = enemy
 
 -- | Bullet updater
 
