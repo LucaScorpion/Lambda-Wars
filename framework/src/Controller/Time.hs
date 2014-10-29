@@ -68,14 +68,14 @@ rotateShip RotateLeft time (Ship {sRot, sRotSpeed})  = sRot + sRotSpeed * time
 --updateEnemies = id
 
 --Update method for the fired bullets
-updateBullets Shoot time bullets (Ship {..}) = (map (updFired time) bullets)
+updateBullets Shoot time bullets (Ship {..}) = newBullet : (map (updFired time) bullets)
                                              where
                                              newBullet = Bullet {
                                              bPos = sPos,
                                              bVelocity = (cos sRot, sin sRot) .* 20,
                                              bTimer = 5
                                              }
-updateBullet DontShoot time bullets (Ship {..}) = map (updFired time) bullets
+updateBullets DontShoot time bullets _ = map (updFired time) bullets
 
 --Remove old bullets
 delOldBullets [] = []
