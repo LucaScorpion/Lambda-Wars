@@ -22,7 +22,7 @@ data World = World {
 		--Player and enemies
         player           :: Ship,
         enemies          :: [Ship],
-        enemySpr         :: Picture,
+        enemySpr         :: [Picture],
         --Enemy spawning
         spawnTime        :: Float,
         nextSpawn        :: Float,
@@ -30,37 +30,43 @@ data World = World {
         bullets          :: [Bullet],
 		--Camera
         cameraPos        :: Point
-    }
-    
+        }
+
+--Actions
 data RotateAction   = NoRotation | RotateLeft | RotateRight
+    deriving Eq
 data MovementAction = NoMovement | Thrust
-data ShootAction    = Shoot      | DontShoot deriving Eq
+    deriving Eq
+data ShootAction    = Shoot      | DontShoot
+    deriving Eq
+
 --Star position and depth
 type Star = (Point, Float)
 
 data Ship = Ship {
-sSprite   :: Picture,
-sPos      :: Point,
-sRot      :: Float,
-sForce    :: Point,
-sVelocity :: Point,
-sMass     :: Float,
-sFriction :: Float,
-sRotSpeed :: Float,
-sPower    :: Float,
-sAlive    :: Bool,
-sReloadTime       :: Float,
-sReloading        :: Float
-}
+    sSprite     :: Picture,
+    sPos        :: Point,
+    sRot        :: Float,
+    sForce      :: Point,
+    sVelocity   :: Point,
+    sMass       :: Float,
+    sFriction   :: Float,
+    sRotSpeed   :: Float,
+    sPower      :: Float,
+    sAlive      :: Bool,
+    sReloadTime :: Float,
+    sReloading  :: Float
+    }
 
 data Bullet = Bullet {
-bPos      :: Point,
-bVelocity :: Point,
-bTimer    :: Float
-}
+    bPos      :: Point,
+    bVelocity :: Point,
+    bTimer    :: Float
+    }
 
+--Generate the initial world
 initial :: Int -> [Picture] -> World
-initial seed sprites = generateStars newWorld
+initial seed (pl:en) = generateStars newWorld
                      where
                      newWorld = World {
                               rndGen = mkStdGen seed,
@@ -73,8 +79,8 @@ initial seed sprites = generateStars newWorld
                               --Background
                               stars          = [],
                               --Player, enemies and bullets
-                              player         = createPlayer (sprites !! 0),
-                              enemySpr       = sprites !! 1,
+                              player         = createPlayer pl,
+                              enemySpr       = en,
                               enemies        = [],
                               spawnTime      = 3,
                               nextSpawn      = 3,
@@ -99,17 +105,15 @@ createPlayer plSpr = Ship {
     sReloadTime = 0.1
     }
 
-							
 --Generate the stars
 generateStars :: World -> World
-generateStars world@(World {rndGen, stars}) = world {rndGen = fst rnds, stars = s}
+generateStars world@(World {rndGen, stars}) = world { rndGen = fst rnds, stars = newStars amount }
                                             where 
 											--Create a random amount of stars
                                             amount = randomR (400 :: Int, 700 :: Int) (snd rnds)
 											--Create 2 new random generators
                                             rnds = split rndGen
 											--List of stars
-                                            s = newStars amount
                                             newStars (0,g) = []
                                             newStars (a,g) = (fst p, fst f) : newStars (a-1,snd f)
                                                            where
