@@ -21,21 +21,21 @@ import Model
 timeHandler :: Float -> World -> World
 timeHandler time world@(World {..}) = world {
                                       player = fst updPlayer,
-									 -- enemies = updEnemies,
+									  -- enemies = updEnemies,
 									  bullets = updBullets,
                                       cameraPos = snd updPlayer
                                       }
                                       where
                                       updPlayer = updatePlayer time player world
                                       --updEnemies = map (updateEnemies time world) enemies 
-                                      updBullets = updateBullets time bullets updPlayer
+                                      updBullets = updateBullets shootAction time (delOldBullets bullets) (fst updPlayer)
 
 --Update the player ship
 updatePlayer :: Float -> Ship -> World -> (Ship, Point)
 updatePlayer time player@(Ship {..}) (World {movementAction, rotateAction, worldWidth, worldHeight})
     = (player {
     sPos = newPos,
-    sRot = rotate rotateAction time player,
+    sRot = rotateShip rotateAction time player,
     sVelocity = newVelocity,
     sForce = calcThrust movementAction player
     }, newPos)
@@ -50,7 +50,7 @@ updatePlayer time player@(Ship {..}) (World {movementAction, rotateAction, world
 --Calculate the force and direction
 calcThrust :: MovementAction -> Ship -> Point
 calcThrust Thrust (Ship {sRot, sPower}) = (cos sRot, sin sRot) .* sPower
-calcThrust NoMovement _ _               = (0, 0)
+calcThrust NoMovement _                 = (0, 0)
 
 --Calculate the velocity
 calcVelocity :: Float -> Ship -> Point
@@ -59,21 +59,33 @@ calcVelocity time (Ship {..}) = (sVelocity + sForce .* (1 / sMass)) ./ (1 + sFri
 --Rotate a ship
 rotateShip :: RotateAction -> Float -> Ship -> Float
 rotateShip RotateRight time (Ship {sRot, sRotSpeed}) = sRot - sRotSpeed * time
-rotateShip NoRotation _ _                            = sRot
+rotateShip NoRotation _ (Ship {sRot})                = sRot
 rotateShip RotateLeft time (Ship {sRot, sRotSpeed})  = sRot + sRotSpeed * time
 
 -- | Bullet updating
 
 --updateEnemies :: Float -> Ship -> World -> Ship
 --updateEnemies = id
---update method for the fired bullets
-updateBullets time bullets@(x:xs) (Ship{sRot},playpos) = if Shootaction == Shoot 
-                                                         then Bullet{bPos = playpos,bVelocity = (cos sRot, sin sRot) .* 20, bTimer = 5 } : map updFired &delOldBullets bullets 
-														 else map updFired &delOldBullets bullets
-                   where
-                   delOldBullets [] = []
-				   delOldBullets (y@(Bullet{..}):ys) = if bTimer > 0 then y:delOldBullets ys else delOldBullets ys
-                   updFired bullet@(Bullet{..}) = bullet {bPos = bPos .+. bVelocity, bTimer = bTimer - time}
+
+--Update method for the fired bullets
+updateBullets Shoot time bullets (Ship {..}) = (map (updFired time) bullets)
+                                             where
+                                             newBullet = Bullet {
+                                             bPos = sPos,
+                                             bVelocity = (cos sRot, sin sRot) .* 20,
+                                             bTimer = 5
+                                             }
+updateBullet DontShoot time bullets (Ship {..}) = map (updFired time) bullets
+
+--Remove old bullets
+delOldBullets [] = []
+delOldBullets (y@(Bullet{..}):ys) = if bTimer > 0 then y : delOldBullets ys else delOldBullets ys
+
+--Update a bullet
+updFired time bullet@(Bullet{..}) = bullet {
+                                    bPos = bPos .+. bVelocity,
+                                    bTimer = bTimer - time
+                                    }
 
 -- | Helper functions
 
