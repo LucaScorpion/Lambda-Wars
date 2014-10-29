@@ -21,18 +21,21 @@ import PointOperators
 
 timeHandler :: Float -> World -> World
 timeHandler time world@(World {..}) = world {
+                                      --rndGen = snd updEnemies,
                                       player = fst updPlayer,
-                                      -- enemies = updEnemies,
-                                      spawnTimer = spawnTimer - time,
+                                      --enemies = updEnemies,
+                                      --spawnTimer = if spawnTimer > 0 then spawnTimer - time else randomR (3, 10),
                                       bullets = fst updBullets,
                                       reload = snd updBullets,
                                       cameraPos = snd updPlayer
                                       }
                                       where
                                       updPlayer = updatePlayer time player world
-                                      --updEnemies = map (updateEnemies time world) enemies 
+                                      --updEnemies = if spawnTimer > 0 then map (updateEnemies time (fst updPlayer)) enemies else spawnEnemy rndGen time (fst updPlayer) enemies
                                       updBullets = updateBullets shootAction time reload (delOldBullets bullets) (fst updPlayer)
 
+									  
+									  
 --Update the player ship
 updatePlayer :: Float -> Ship -> World -> (Ship, Point)
 updatePlayer time player@(Ship {..}) (World {movementAction, rotateAction, worldWidth, worldHeight})
@@ -65,11 +68,25 @@ rotateShip RotateRight time (Ship {sRot, sRotSpeed}) = sRot - sRotSpeed * time
 rotateShip NoRotation _ (Ship {sRot})                = sRot
 rotateShip RotateLeft time (Ship {sRot, sRotSpeed})  = sRot + sRotSpeed * time
 
--- | Bullet updating
+-- | Enemy updater
 
---updateEnemies :: Float -> Ship -> World -> Ship
---updateEnemies = id
+-- needs to return list of enemies, rndGen, spawnTimer?
+--spawnEnemy randomGen time player enemies = newEnemy : map (updateEnemies time (fst updPlayer)) enemies
+--                                          where
+--                                          newEnemy = Ship {
+--                                          sSprite   :: Picture,
+--                                          sPos      :: Point,
+--                                          sRot      :: Float,
+--                                          sForce    :: Point,
+--                                          sVelocity :: Point,
+--                                          sMass     :: Float,
+--                                          sFriction :: Float,
+--                                          sRotSpeed :: Float,
+--                                          sPower    :: Float
 
+--updateEnemies  time enemy@(Ship{..}) =
+
+-- | Bullet updater
 --Update method for the fired bullets
 updateBullets Shoot time reload bullets (Ship {..}) = if reload > 0 then (map (updFired time) bullets, reload - time) else (newBullet : (map (updFired time) bullets), reloadTime)
                                              where
@@ -78,7 +95,7 @@ updateBullets Shoot time reload bullets (Ship {..}) = if reload > 0 then (map (u
                                              bVelocity = (cos sRot, sin sRot) .* 20,
                                              bTimer = 5
                                              }
-											 reloadTime = 0.5
+                                             reloadTime = 0.5
 updateBullets DontShoot time reload bullets _ = (map (updFired time) bullets, reload - time)
 
 --Remove old bullets
