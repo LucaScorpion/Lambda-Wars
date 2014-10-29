@@ -22,11 +22,14 @@ import PointOperators
 timeHandler :: Float -> World -> World
 timeHandler time world@(World {..}) = world {
                                       player = fst updPlayer,
-									  -- enemies = updEnemies,
 									  bullets = updBullets,
                                       cameraPos = snd updPlayer,
                                       nextSpawn = if spawnEnemy then spawnTime else nextSpawn - time,
                                       enemies = updEnemies
+                                      spawnTimer = spawnTimer - time,
+                                      bullets = fst updBullets,
+                                      reload = snd updBullets,
+                                      cameraPos = snd updPlayer
                                       }
                                       where
                                       spawnEnemy = nextSpawn <= 0
@@ -34,7 +37,7 @@ timeHandler time world@(World {..}) = world {
                                       spawnPos = (0, 0)
                                       updPlayer = updatePlayer time player world
                                       updEnemies = map (updateEnemies time world) (updateEnemyList newEnemy enemies)
-                                      updBullets = updateBullets shootAction time (delOldBullets bullets) (fst updPlayer)
+                                      updBullets = updateBullets shootAction time reload (delOldBullets bullets) (fst updPlayer)
 
 --Update the player ship
 updatePlayer :: Float -> Ship -> World -> (Ship, Point)
@@ -114,14 +117,15 @@ delOldBullets (y@(Bullet{..}):ys) = if bTimer > 0
                                     else delOldBullets ys
 
 --Update method for the fired bullets
-updateBullets Shoot time bullets (Ship {..}) = newBullet : (map (updFired time) bullets)
+updateBullets Shoot time reload bullets (Ship {..}) = if reload > 0 then (map (updFired time) bullets, reload - time) else (newBullet : (map (updFired time) bullets), reloadTime)
                                              where
                                              newBullet = Bullet {
                                              bPos = sPos,
                                              bVelocity = (cos sRot, sin sRot) .* 20,
                                              bTimer = 0.5
                                              }
-updateBullets DontShoot time bullets _ = map (updFired time) bullets
+											 reloadTime = 0.5
+updateBullets DontShoot time reload bullets _ = (map (updFired time) bullets, reload - time)
 
 updFired time bullet@(Bullet{..}) = bullet {
                                     bPos = bPos .+. bVelocity,
