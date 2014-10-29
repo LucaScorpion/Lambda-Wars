@@ -15,6 +15,7 @@ import Graphics.Gloss.Geometry
 import System.Random
 
 import Model
+import PointOperators
 
 -- | Time handling
 
@@ -42,7 +43,7 @@ updatePlayer time player@(Ship {..}) (World {movementAction, rotateAction, world
     where
     newVelocity = calcVelocity time player
     --Calculate the position
-    newPos = clampP updatePosition (0, 0) (worldWidth, worldHeight)
+    newPos = clampP updatePosition (-worldWidth / 2, -worldHeight / 2) (worldWidth / 2, worldHeight / 2)
     updatePosition = sPos + newVelocity .* time
 
 -- | Functions to calculate force, velocity
@@ -99,28 +100,3 @@ clampF value mn mx = max (min value mx) mn
 clampP :: Point -> Point -> Point -> Point
 clampP value mn mx = (clampF (fst value) (fst mn) (fst mx),
                      clampF (snd value) (snd mn) (snd mx))
-
--- | Operators
-
-infixl 7 .*, .*., ./
-infixl 6 .+., .-.
-
---Multiply a point and a float
-(.*) :: Point -> Float -> Point
-(x, y) .* f = (x * f, y * f)
-
---Multiply two points
-(.*.) :: Point -> Point -> Point
-(x, y) .*. (z, w) = (x * z, y * w)
-
---Divide a point by a float
-(./) :: Point -> Float -> Point
-(x, y) ./ f = (x / f, y / f)
-
---Add two points
-(.+.) :: Point -> Point -> Point
-(x, y) .+. (z, w) = (x + z, y + w)
-
---Substract two points
-(.-.) :: Point -> Point -> Point
-(x, y) .-. (z, w) = (x - z, y - w)
