@@ -16,8 +16,7 @@ draw horizontalResolution verticalResolution (World{..})
     = pictures [
      pictures (map drawStars stars),
      translate (-fst cameraPos) (-snd cameraPos) 
-     (pictures  $ drawPlayer player : (map drawBullets bullets)),
-	 rectangleWire 2000 2000
+     (pictures  $ translate (1000) (1000) (color azure (rectangleWire 2000 2000)) : drawPlayer player : (map drawBullets bullets))
      ]
       where
       drawPlayer (Ship{..}) = translate
