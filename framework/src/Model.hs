@@ -102,8 +102,8 @@ generateStars world@(World {rndGen, stars}) = world {rndGen = fst rnds, stars = 
                                                            p = rndPoint g
                                                            f = rndFloat (0.0, 1.0) (snd p)
 											--Randoms
-                                            rndPoint g = let (w, g') = rndFloat (-1.0, 1.0) g
-                                                         in let (h, g'') = rndFloat (-1.0, 1.0) g'
+                                            rndPoint g = let (w, g') = rndFloat (0, 1.0) g
+                                                         in let (h, g'') = rndFloat (0, 1.0) g'
                                                             in ((w, h), g'')
                                             rndFloat :: RandomGen g => (Float, Float) -> g -> (Float, g)
                                             rndFloat r g = randomR r g
