@@ -9,11 +9,12 @@ import Graphics.Gloss.Geometry
 -- | Game state
 
 data World = World {
-        -- Random generator
+        --Random generator
         rndGen           :: StdGen,
+        --World size
         worldWidth       :: Float,
         worldHeight      :: Float,
-        -- Event queue
+        --Actions
         rotateAction     :: RotateAction,
         movementAction   :: MovementAction,
         shootAction      :: ShootAction,
@@ -29,7 +30,9 @@ data World = World {
         --Shooting
         bullets          :: [Bullet],
 		--Camera
-        cameraPos        :: Point
+        cameraPos        :: Point,
+        --Score
+        score            :: Int
         }
 
 --Actions
@@ -44,23 +47,30 @@ data ShootAction    = Shoot      | DontShoot
 type Star = (Point, Float)
 
 data Ship = Ship {
+    --Ship sprite
     sSprite     :: Picture,
+    --Position and rotation
     sPos        :: Point,
     sRot        :: Float,
+    --Physics properties
     sForce      :: Point,
     sVelocity   :: Point,
     sMass       :: Float,
     sFriction   :: Float,
     sRotSpeed   :: Float,
     sPower      :: Float,
+    --Alive or dead
     sAlive      :: Bool,
+    --Reloading
     sReloadTime :: Float,
     sReloading  :: Float
     }
 
 data Bullet = Bullet {
+    --Position and speed
     bPos      :: Point,
     bVelocity :: Point,
+    --Time to live
     bTimer    :: Float
     }
 
@@ -72,20 +82,18 @@ initial seed (pl:en) = generateStars newWorld
                               rndGen = mkStdGen seed,
                               worldWidth     = 2000,
                               worldHeight    = 2000,
-                              --Actions
                               rotateAction   = NoRotation,
                               movementAction = NoMovement,
                               shootAction    = DontShoot,
-                              --Background
                               stars          = [],
-                              --Player, enemies and bullets
                               player         = createPlayer pl,
                               enemySpr       = en,
                               enemies        = [],
                               spawnTime      = 3,
                               nextSpawn      = 3,
                               bullets        = [],
-                              cameraPos      = (0, 0)
+                              cameraPos      = (0, 0),
+                              score          = 0
                               }
 
 --Create a player ship
@@ -98,7 +106,7 @@ createPlayer plSpr = Ship {
     sVelocity = (0,0),
     sMass = 50,
     sFriction = 3,
-    sRotSpeed = 4,
+    sRotSpeed = 3,
     sPower = 500,
     sAlive = True,
     sReloading = 0,
