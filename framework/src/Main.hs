@@ -22,10 +22,11 @@ import Controller
 
 main :: IO ()
 main = do
-    player <- loadBMP "lambda-wars-tmp/Resources/kspaceduel64.bmp"
+    playerShip <- loadBMP "lambda-wars-tmp/Resources/kspaceduel64.bmp"
+    insectShip <- loadBMP "lambda-wars-tmp/Resources/insectShip64.bmp"
     args <- getArgs
     time <- round <$> getPOSIXTime
-    let initial'        = initial time player
+    let initial'        = initial time [playerShip, insectShip]
     let (w, h, display) = chooseDisplay args
     let background      = black
     let fps             = 60

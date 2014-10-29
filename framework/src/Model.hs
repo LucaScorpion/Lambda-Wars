@@ -59,45 +59,45 @@ bVelocity :: Point,
 bTimer    :: Float
 }
 
-initial :: Int -> Picture -> World
-initial seed plSpr = generateStars newWorld
-                   where
-                   newWorld = World {
-                            rndGen = mkStdGen seed,
-                            worldWidth = 2000,
-                            worldHeight = 2000,
-                            --Actions
-                            rotateAction = NoRotation,
-                            movementAction = NoMovement,
-                            shootAction = DontShoot,
-                            --Background
-                            stars=[],
-                            --Player, enemies and bullets
-                            player = createPlayer plSpr,
-                            enemySpr = plSpr,
-                            enemies = [],
-                            spawnTime = 3,
-                            nextSpawn = 3,
-                            bullets = [],
-                            cameraPos = (0, 0)
-                            }
+initial :: Int -> [Picture] -> World
+initial seed sprites = generateStars newWorld
+                     where
+                     newWorld = World {
+                              rndGen = mkStdGen seed,
+                              worldWidth     = 2000,
+                              worldHeight    = 2000,
+                              --Actions
+                              rotateAction   = NoRotation,
+                              movementAction = NoMovement,
+                              shootAction    = DontShoot,
+                              --Background
+                              stars          = [],
+                              --Player, enemies and bullets
+                              player         = createPlayer (sprites !! 0),
+                              enemySpr       = sprites !! 1,
+                              enemies        = [],
+                              spawnTime      = 3,
+                              nextSpawn      = 3,
+                              bullets        = [],
+                              cameraPos      = (0, 0)
+                              }
 
 --Create a player ship
 createPlayer :: Picture -> Ship
 createPlayer plSpr = Ship {
-sSprite = plSpr,
-sPos = (0,0),
-sRot = degToRad 90,
-sForce = (0,0),
-sVelocity = (0,0),
-sMass = 50,
-sFriction = 3,
-sRotSpeed = 4,
-sPower = 500,
-sAlive = True,
-sReloading = 0,
-sReloadTime = 0.1
-}
+    sSprite = plSpr,
+    sPos = (0,0),
+    sRot = degToRad 90,
+    sForce = (0,0),
+    sVelocity = (0,0),
+    sMass = 50,
+    sFriction = 3,
+    sRotSpeed = 4,
+    sPower = 500,
+    sAlive = True,
+    sReloading = 0,
+    sReloadTime = 0.1
+    }
 
 							
 --Generate the stars
@@ -113,11 +113,11 @@ generateStars world@(World {rndGen, stars}) = world {rndGen = fst rnds, stars = 
                                             newStars (0,g) = []
                                             newStars (a,g) = (fst p, fst f) : newStars (a-1,snd f)
                                                            where
-                                                           p = rndPoint g
-                                                           f = rndFloat (0.0, 1.0) (snd p)
-											--Randoms
-                                            rndPoint g = let (w, g') = rndFloat (-1.1, 1.1) g
-                                                         in let (h, g'') = rndFloat (-1.1, 1.1) g'
-                                                            in ((w, h), g'')
-                                            rndFloat :: RandomGen g => (Float, Float) -> g -> (Float, g)
-                                            rndFloat r g = randomR r g
+                                                           p = randomP (-1.1, -1.1) (1.1, 1.1) g
+                                                           f = randomR (0.0, 1.0) (snd p)
+
+--Generate a random point
+randomP :: RandomGen g => Point -> Point -> g -> (Point, g)
+randomP p1 p2 g = let (w, g') = randomR (fst p1, snd p1) g
+                  in let (h, g'') = randomR (fst p2, snd p2) g'
+                     in ((w, h), g'')
