@@ -31,7 +31,7 @@ timeHandler time world@(World {..}) = world {
                                       where
                                       --Updated enemy and bullet list
                                       updCollisions = checkCollisions updEnemies updBullets
-                                      updEnemies = map (updateEnemy time world) (spawnEnemy newEnemy enemies)
+                                      updEnemies = map (updateEnemy time world (fst updPlayer)) (spawnEnemy newEnemy enemies)
                                       updBullets = updateBullets shootAction time (delOldBullets bullets) (createBullet player)
                                       --Enemy spawning
                                       spawnPos = randomP (-1000,1000) (-1000,1000) rndGen
@@ -43,7 +43,7 @@ updatePlayer :: Float -> Ship -> World -> (Ship, Point)
 updatePlayer time pl@(Ship {..}) (World {..})
     = (pl {
     sPos = newPos,
-    sRot = rotateShip rotateAction time player,
+    sRot = normaliseAngle (rotateShip rotateAction time player),
     sVelocity = newVelocity,
     sForce = calcThrust movementAction player,
     sReloading = rldTime
@@ -113,8 +113,21 @@ spawnEnemy mShip enemies = case mShip of
                            Just ship -> ship : enemies
 
 --Update an enemy ship
-updateEnemy :: Float -> World -> Ship -> Ship
-updateEnemy time (World {..}) enemy@(Ship {..}) = enemy
+updateEnemy :: Float -> World -> Ship -> Ship -> Ship
+updateEnemy time (World {..}) playert@(Ship {sPos = pPos}) enemy@(Ship {..}) = enemy {
+                                                  sPos = sPos,
+                                                  sRot = anglepe, -- normaliseAngle $ rotateShip rotR time enemy,
+                                                  sVelocity = newVelocity,
+                                                  sForce = calcThrust Thrust enemy
+                                                  }
+                                                  where
+                                                  rotR = (if anglepe >= pi || (anglepe < 0 && anglepe > -pi )  then RotateRight else rotL)
+                                                  rotL = (if anglepe <= -pi || (anglepe > 0 && anglepe < pi )  then RotateRight else NoRotation)
+                                                  anglepe = (acos ((fst anglep)/(sPos.<>.pPos)))
+                                                  anglep = sPos .-. pPos
+                                                  newVelocity = calcVelocity time enemy
+                                                  newPos = clampP updatePosition (-worldWidth / 2, -worldHeight / 2) (worldWidth / 2, worldHeight / 2)
+                                                  updatePosition = sPos + newVelocity .* time
 
 -- | Bullet updater
 
