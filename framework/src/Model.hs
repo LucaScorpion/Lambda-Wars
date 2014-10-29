@@ -23,17 +23,18 @@ data World = World {
         player           :: Ship,
         enemies          :: [Ship],
         enemySpr         :: Picture,
+        --Enemy spawning
         spawnTime        :: Float,
         nextSpawn        :: Float,
+        --Shooting
         bullets          :: [Bullet],
-        reload           :: Float,
 		--Camera
         cameraPos        :: Point
     }
     
 data RotateAction   = NoRotation | RotateLeft | RotateRight
 data MovementAction = NoMovement | Thrust
-data ShootAction    = Shoot      | DontShoot
+data ShootAction    = Shoot      | DontShoot deriving Eq
 --Star position and depth
 type Star = (Point, Float)
 
@@ -47,7 +48,9 @@ sMass     :: Float,
 sFriction :: Float,
 sRotSpeed :: Float,
 sPower    :: Float,
-sAlive    :: Bool
+sAlive    :: Bool,
+sReloadTime       :: Float,
+sReloading        :: Float
 }
 
 data Bullet = Bullet {
@@ -60,23 +63,22 @@ initial :: Int -> Picture -> World
 initial seed plSpr = generateStars newWorld
                    where
                    newWorld = World {
-						    rndGen = mkStdGen seed,
-							worldWidth = 2000,
-							worldHeight = 2000,
+                            rndGen = mkStdGen seed,
+                            worldWidth = 2000,
+                            worldHeight = 2000,
                             --Actions
-						    rotateAction = NoRotation,
-						    movementAction = NoMovement,
-						    shootAction = DontShoot,
+                            rotateAction = NoRotation,
+                            movementAction = NoMovement,
+                            shootAction = DontShoot,
                             --Background
-						    stars=[],
+                            stars=[],
                             --Player, enemies and bullets
-							player = createPlayer plSpr,
+                            player = createPlayer plSpr,
                             enemySpr = plSpr,
                             enemies = [],
                             spawnTime = 3,
                             nextSpawn = 3,
                             bullets = [],
-                            reload = 0,
                             cameraPos = (0, 0)
                             }
 
@@ -92,7 +94,9 @@ sMass = 50,
 sFriction = 3,
 sRotSpeed = 4,
 sPower = 500,
-sAlive = True
+sAlive = True,
+sReloading = 0,
+sReloadTime = 0.1
 }
 
 							
