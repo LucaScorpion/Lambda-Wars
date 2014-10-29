@@ -102,12 +102,16 @@ updateEnemyList mShip (x@(Ship{sAlive}):xs) = case mShip of
 --Update an enemy ship
 updateEnemies :: Float -> World -> Ship -> Ship
 updateEnemies time (World {..}) enemy@(Ship {..}) = enemy {
-                                                    sAlive = not $ checkCollision player enemy
+                                                    sAlive = not (or (map (checkBulletCollision enemy) bullets))
                                                     }
 
 --Check for collision between 2 ships
-checkCollision :: Ship -> Ship -> Bool
-checkCollision (Ship {sPos = pos1}) (Ship {sPos = pos2}) = abs (pos1 .<>. pos2) <= 64
+checkShipCollision :: Ship -> Ship -> Bool
+checkShipCollision (Ship {sPos = pos1}) (Ship {sPos = pos2}) = abs (pos1 .<>. pos2) <= 64
+
+--Check for collision between a ship and a bullet
+checkBulletCollision :: Ship -> Bullet -> Bool
+checkBulletCollision (Ship {sPos}) (Bullet {bPos}) = abs (sPos .<>. bPos) <= 32
 
 -- | Bullet updater
 
