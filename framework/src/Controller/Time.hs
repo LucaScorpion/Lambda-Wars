@@ -97,7 +97,7 @@ checkBulCollisions enemies bullets = (collideEnemy enemies, collideBullet bullet
                                 collideBullet = filter (\ b -> not $ shipCol b)
                                 shipCol bullet = or (map (\ e -> checkBulletCollision e bullet) enemies)
                                 hitEnemy enemy@(Ship{..}) = if sLifes > 1 then [enemy{sLifes = sLifes - 1, sInvuln = 1}] else []
-                                checkBulletCollision (Ship {sPos}) (Bullet {bPos}) = abs (sPos .<>. bPos) <= 32
+                                checkBulletCollision (Ship {sPos, sSize}) (Bullet {bPos}) = abs (sPos .<>. bPos) <= sSize
 
 --Check for collision between 2 ships
 checkShCollisions :: [Ship] -> Ship -> Float -> ([Ship], Ship)
