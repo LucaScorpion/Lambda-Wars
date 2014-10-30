@@ -185,6 +185,31 @@ updFired time bullet@(Bullet{..}) = bullet {
                                     bTimer = bTimer - time
                                     }
 
+-- | Particles
+
+--Update particles
+updateParticles = map updateParticle
+
+updateParticle :: Float -> Particle -> Particle
+updateParticle time particle@(Particle {..}) = particle {
+                                               pTimer = pTimer - time,
+                                               pPos = pPos + pVelocity
+                                               }
+
+--Ship exhaust particles
+exhaustParticles :: MovementAction -> Ship -> [Particle] -> [Particle]
+exhaustParticles NoMovement _ = id
+exhaustParticles Thrust ship particles = (exhaustParticle ship) : particles
+
+exhaustParticle :: Ship -> Particle
+exhaustParticle (Ship {sPos, sRot}) = Particle {
+                                      pTimer = 0.5,
+                                      pColor = greyN 0.5,
+                                      pSize = 2,
+                                      pPos = sPos,
+                                      pVelocity = (0, 0)
+                                      }
+
 -- | Helper functions
 
 --Clamp a float

@@ -78,9 +78,11 @@ data Bullet = Bullet {
 
 data Particle = Particle {
     pPos      :: Point,
-    bVelocity :: Point,
+    pVelocity :: Point,
     pColor    :: Color,
-    bTimer    :: Float
+    pTimer    :: Float,
+    pSize     :: Float
+    }
 
 --Generate the initial world
 initial :: Int -> [Picture] -> World
