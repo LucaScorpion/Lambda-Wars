@@ -16,7 +16,8 @@ draw horizontalResolution verticalResolution (World{..})
     = pictures [
       pictures (map drawStars stars),
       translate (-fst cameraPos) (-snd cameraPos) 
-      (pictures  $ (color violet (rectangleWire 2000 2000)) : drawPlayer player : pictures (map drawShip enemies) : (map drawBullets bullets))
+      (pictures  $ (color violet (rectangleWire 2000 2000)) : drawPlayer player : pictures (map drawShip enemies) : (map drawBullets bullets)),
+      drawlives player
       ]
       where
       drawPlayer (Ship{..}) = translate (fst sPos)(snd sPos) (pictures [rotate ((-radToDeg sRot) - 90) sSprite, if sInvuln > 0 then color blue (circle  40) else blank])
@@ -28,3 +29,8 @@ draw horizontalResolution verticalResolution (World{..})
                             (worldHeight * y - 0.7 * (snd cameraPos * z))
                             (color white $ circleSolid ((z + 0.3) * 1.9))
       drawBullets (Bullet{..}) = translate (fst bPos) (snd bPos) (color red $ circleSolid 4)
+	  
+      drawlives (Ship{..}) = drawlife sLifes
+                             where
+                             drawlife 0 = blank
+                             drawlife l = pictures[translate (horizontalResolution/2 - l * 52) (verticalResolution/2 - 40) sSprite, drawlife (l-1)]
