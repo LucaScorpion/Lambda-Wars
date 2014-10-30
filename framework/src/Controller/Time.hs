@@ -95,7 +95,7 @@ checkShCollisions enemies player time = ([e | e <- (filterNoPCol enemies player)
                                        where
 								       -- check if enemy collides with player
                                        filterNoPCol [] _ = []
-                                       filterNoPCol (x:xs) (Ship{..}) = if playCol x && sInvuln <= 0 then xs else x:(filterNoPCol xs player)
+                                       filterNoPCol (x:xs) (Ship{..}) = if playCol x then xs else x:(filterNoPCol xs player)
                                        playCol ship = checkShipCollision ship player
 						       		   -- check if player collides with enemy
                                        updECol :: Ship -> Ship
