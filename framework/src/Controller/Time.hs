@@ -92,11 +92,11 @@ checkBulCollisions enemies bullets = ([e | e <- filterNoBCol enemies], [b | b <-
 --Check for collision between 2 ships
 --checkShipCollision :: Ship -> Ship -> Bool
 checkShCollisions :: [Ship] -> Ship -> Float -> ([Ship], Ship)
-checkShCollisions enemies player time = ([e | e <- filterNoPCol enemies], updECol player)
+checkShCollisions enemies player time = ([e | e <- (filterNoPCol enemies player)], updECol player)
                                        where
 								       -- check if enemy collides with player
-                                       filterNoPCol [] = []
-                                       filterNoPCol (x:xs)= if playCol x then xs else x:(filterNoPCol xs)
+                                       filterNoPCol [] _ = []
+                                       filterNoPCol (x:xs) (Ship{..}) = if playCol x && sInvuln <= 0 then xs else x:(filterNoPCol xs player)
                                        playCol ship = checkShipCollision ship player
 						       		   -- check if player collides with enemy
                                        updECol :: Ship -> Ship
