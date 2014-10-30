@@ -32,7 +32,9 @@ data World = World {
 		--Camera
         cameraPos        :: Point,
         --Score
-        score            :: Int
+        score            :: Int,
+        --Particles
+        particles        :: [Particle]
         }
 
 --Actions
@@ -70,12 +72,16 @@ data Ship = Ship {
     }
 
 data Bullet = Bullet {
-    --Position and speed
     bPos      :: Point,
     bVelocity :: Point,
-    --Time to live
     bTimer    :: Float
     }
+
+data Particle = Particle {
+    pPos      :: Point,
+    bVelocity :: Point,
+    pColor    :: Color,
+    bTimer    :: Float
 
 --Generate the initial world
 initial :: Int -> [Picture] -> World
@@ -96,7 +102,8 @@ initial seed (pl:en) = generateStars newWorld
                               nextSpawn      = 3,
                               bullets        = [],
                               cameraPos      = (0, 0),
-                              score          = 0
+                              score          = 0,
+                              particles      = []
                               }
 
 --Create a player ship
