@@ -90,7 +90,6 @@ checkBulCollisions enemies bullets = ([e | e <- filterNoBCol enemies], [b | b <-
                                 checkBulletCollision (Ship {sPos}) (Bullet {bPos}) = abs (sPos .<>. bPos) <= 32
 
 --Check for collision between 2 ships
---checkShipCollision :: Ship -> Ship -> Bool
 checkShCollisions :: [Ship] -> Ship -> Float -> ([Ship], Ship)
 checkShCollisions enemies player time = ([e | e <- (filterNoPCol enemies player)], updECol player)
                                        where
@@ -102,12 +101,11 @@ checkShCollisions enemies player time = ([e | e <- (filterNoPCol enemies player)
                                        updECol :: Ship -> Ship
                                        updECol playert@(Ship{..}) = if enemyCol playert && sInvuln <= 0 then hitPlayer playert else playert{sInvuln = sInvuln - time}
                                        enemyCol p = or (map (checkShipCollision p) enemies)
-                                       checkShipCollision (Ship {sPos = pos1}) (Ship {sPos = pos2}) = abs (pos1 .<>. pos2) <= 64
                                        hitPlayer playert@(Ship{..}) = if sLifes > 0 then playert{sLifes = sLifes - 1, sInvuln = 2} else playert{sAlive = False}
 
---Check for collision between a ship and a bullet
---checkBulletCollision :: Ship -> Bullet -> Bool
---checkBulletCollision (Ship {sPos}) (Bullet {bPos}) = abs (sPos .<>. bPos) <= 32
+--Check if 2 ships collide
+checkShipCollision :: Ship -> Ship -> Bool
+checkShipCollision (Ship {sPos = pos1}) (Ship {sPos = pos2}) = abs (pos1 .<>. pos2) <= 80
 
 -- | Enemy updater
 
