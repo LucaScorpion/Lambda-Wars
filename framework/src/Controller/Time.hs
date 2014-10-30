@@ -8,6 +8,7 @@ module Controller.Time (
 import Control.Arrow ((>>>))
 
 import Data.List
+import Data.Maybe
 
 import Graphics.Gloss
 import Graphics.Gloss.Geometry
@@ -26,13 +27,14 @@ timeHandler time world@(World {..}) = if checkplayerlife player then updateWorld
                                      playerSpr (Ship{..}) = sSprite
 
 updateWorld time world@(World {..}) = world {
-                                      rndGen = snd exhParticles,
+                                      rndGen = snd expParticles,
                                       player = snd updShCollisions,
                                       cameraPos = snd updPlayer,
                                       enemies = fst updShCollisions,
                                       bullets = snd updBulCollisions,
                                       nextSpawn = if nextSpawn <= 0 then spawnTime else nextSpawn - time,
-                                      particles = fst exhParticles
+                                      particles = updParticles,
+                                      score = if isJust expPos then score + 1 else score
                                       }
                                       where
                                       --Updated enemy and bullet list
@@ -45,9 +47,10 @@ updateWorld time world@(World {..}) = world {
                                       newEnemy = if nextSpawn <= 0 then Just (createEnemy (fst spawnPos) (enemySpr !! 0)) else Nothing
                                       updPlayer = updatePlayer time player world
 									  -- Particle updating
-                                      updParticles = updateParticles particles time 10
-                                      exhParticles = exhaustParticles (snd spawnPos) movementAction player updParticles
-                                      expParticles = 
+                                      updParticles = (fst exhParticles) ++ (updateParticles particles time 10) ++ (fst expParticles)
+                                      exhParticles = exhaustParticles (snd spawnPos) movementAction player
+                                      expParticles = if isJust expPos then explosionParticles (snd exhParticles) 100 (fromJust expPos) else ([],(snd exhParticles)) 
+                                      expPos = snd $ fst updBulCollisions
 									  
 
 --Update the player ship
@@ -90,10 +93,9 @@ checkBulCollisions :: [Ship] -> [Bullet] -> (([Ship], Maybe Point), [Bullet])
 checkBulCollisions enemies bullets = (collideEnemy enemies, collideBullet bullets)
                                 where
                                 collideEnemy [] = ([], Nothing)
-                                collideEnemy (x@(Ship {..}):xs) | bullCol x = (hitEnemy x ++ xs, mPos)
+                                collideEnemy (x@(Ship {..}):xs) | bullCol x = (hitEnemy x ++ xs, Just sPos)
                                                                 | otherwise = (x : fst collRest, snd collRest)
                                                                 where
-                                                                mPos = if sLifes <= 0 then Just sPos else Nothing
                                                                 collRest = collideEnemy xs    
                                 bullCol enemy = or (map (checkBulletCollision enemy) bullets)
                                 collideBullet = filter (\ b -> not $ shipCol b)
@@ -214,9 +216,9 @@ updateParticle time sizeLerp particle@(Particle {..}) = particle {
                                                         }
 
 --Ship exhaust particles
-exhaustParticles :: StdGen -> MovementAction -> Ship -> [Particle] -> ([Particle], StdGen)
-exhaustParticles rndGen NoMovement _ particles = (particles,rndGen)
-exhaustParticles rndGen Thrust ship particles  = ((exhaustParticle ship (fst offset) (fst rndLife)) : particles, (snd rndLife))
+exhaustParticles :: RandomGen g => g -> MovementAction -> Ship -> ([Particle], g)
+exhaustParticles rndGen NoMovement _= ([],rndGen)
+exhaustParticles rndGen Thrust ship  = ([exhaustParticle ship (fst offset) (fst rndLife)], (snd rndLife))
                                                where
                                                offset = randomR (-1.5 ,1.5) rndGen
                                                rndLife = randomR (0.5, 1.0) (snd offset)
@@ -231,21 +233,23 @@ exhaustParticle (Ship {sPos, sRot}) offset rndLife = Particle {
                                                      }
 
 --Explosion particles rndGen, Float, [Particle], Point
-explosionParticle :: stdGen -> Float -> Point -> [Particle] -> ([Particle],rndGen)
-explosionParticles rndGen 0 pos particles      = (particles,rndGen)
-explosionParticles rndGen amount pos particles = (newParticle : (fst otherexppar), snd otherexppar)
+explosionParticles :: RandomGen g => g -> Float -> Point -> ([Particle],g)
+explosionParticles rndGen 0 pos      = ([],rndGen)
+explosionParticles rndGen amount pos = (newParticle : (fst otherexppar), snd otherexppar)
                                               where
-                                              otherexppar = explosionParticles (snd rndVel) (amount -1) pos particles
+                                              otherexppar = explosionParticles (snd rndA) (amount -1) pos
                                               newParticle = Particle {
                                                             pPos = pos,
                                                             pVelocity = fst rndVel,
-                                                            pColor = makeColor 1.0 0.5 0.0 1.0,
-                                                            pTimer = 0.5,
+                                                            pColor = makeColor (fst rndR) (fst rndG) 0.0 (fst rndA),
+                                                            pTimer = fst rndTime,
                                                             pSize = 2
                                                             }
                                               rndVel = randomP (-1, 1) (-1,1) rndGen
-
-											  
+                                              rndTime = randomR (0.5, 1.5 :: Float) (snd rndVel)
+                                              rndR = randomR (0.5 :: Float, 1.0)  (snd rndTime)
+                                              rndG = randomR (0.0, 0.5 :: Float) (snd rndR)
+                                              rndA = randomR (0.4, 0.7 :: Float) (snd rndG)
 															
 -- | Helper functions
 
