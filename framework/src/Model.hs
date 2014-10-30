@@ -59,6 +59,7 @@ data Ship = Ship {
     sFriction   :: Float,
     sRotSpeed   :: Float,
     sPower      :: Float,
+    sSize       :: Float,
     --Alive or dead
     sLifes      :: Float,
 	sInvuln     :: Float,
@@ -101,19 +102,20 @@ initial seed (pl:en) = generateStars newWorld
 --Create a player ship
 createPlayer :: Picture -> Ship
 createPlayer plSpr = Ship {
-    sSprite = plSpr,
-    sPos = (0,0),
-    sRot = degToRad 90,
-    sForce = (0,0),
-    sVelocity = (0,0),
-    sMass = 50,
-    sFriction = 3,
-    sRotSpeed = 3.5,
-    sPower = 600,
-    sLifes = 3,
-    sInvuln = 2,
-    sAlive = True,
-    sReloading = 0,
+    sSprite     = plSpr,
+    sPos        = (0,0),
+    sRot        = degToRad 90,
+    sForce      = (0,0),
+    sVelocity   = (0,0),
+    sMass       = 50,
+    sFriction   = 3,
+    sRotSpeed   = 3.5,
+    sPower      = 600,
+    sSize       = 40,
+    sLifes      = 3,
+    sInvuln     = 2,
+    sAlive      = True,
+    sReloading  = 0,
     sReloadTime = 0.1
     }
 

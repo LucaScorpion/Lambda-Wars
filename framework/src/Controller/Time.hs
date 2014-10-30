@@ -105,7 +105,8 @@ checkShCollisions enemies player time = ([e | e <- (filterNoPCol enemies player)
 
 --Check if 2 ships collide
 checkShipCollision :: Ship -> Ship -> Bool
-checkShipCollision (Ship {sPos = pos1}) (Ship {sPos = pos2}) = abs (pos1 .<>. pos2) <= 80
+checkShipCollision (Ship {sPos = pos1, sSize = size1}) (Ship {sPos = pos2, sSize = size2})
+    = abs (pos1 .<>. pos2) <= size1 + size2
 
 -- | Enemy updater
 
@@ -121,6 +122,7 @@ createEnemy pos spr = Ship {
                       sFriction = 3,
                       sRotSpeed = 4,
                       sPower = 500,
+                      sSize = 40,
 					  sLifes = 1,
                       sInvuln = 0,
                       sAlive = True
