@@ -26,27 +26,26 @@ timeHandler time world@(World {..}) = if checkplayerlife player then updateWorld
                                      playerSpr (Ship{..}) = sSprite
 
 updateWorld time world@(World {..}) = world {
-                                      rndGen = snd rnds,
+                                      rndGen = snd updParticles,
                                       player = snd updShCollisions,
                                       cameraPos = snd updPlayer,
                                       enemies = fst updShCollisions,
                                       bullets = snd updBulCollisions,
                                       nextSpawn = if nextSpawn <= 0 then spawnTime else nextSpawn - time,
-                                      particles = updParticles
+                                      particles = fst updParticles
                                       }
                                       where
-                                      rnds = split rndGen
                                       --Updated enemy and bullet list
                                       updBulCollisions = checkBulCollisions updEnemies updBullets
                                       updShCollisions = checkShCollisions (fst updBulCollisions) (fst updPlayer) time
                                       updEnemies = map (updateEnemy time world (fst updPlayer)) (spawnEnemy newEnemy enemies)
                                       updBullets = updateBullets shootAction time (delOldBullets bullets) (createBullet player)
                                       --Enemy spawning
-                                      spawnPos = randomP (-1000,1000) (-1000,1000) (fst rnds)
+                                      spawnPos = randomP (-1000,1000) (-1000,1000) rndGen
                                       newEnemy = if nextSpawn <= 0 then Just (createEnemy (fst spawnPos) (enemySpr !! 0)) else Nothing
                                       updPlayer = updatePlayer time player world
 									  -- Particle updating
-                                      updParticles = exhaustParticles movementAction player (updateParticles particles time)
+                                      updParticles = exhaustParticles (snd spawnPos) movementAction player (updateParticles particles time)
 									  
 
 --Update the player ship
@@ -207,18 +206,21 @@ updateParticle time particle@(Particle {..}) = particle {
                                                }
 
 --Ship exhaust particles
-exhaustParticles :: MovementAction -> Ship -> [Particle] -> [Particle]
-exhaustParticles NoMovement _ particles = particles
-exhaustParticles Thrust ship particles  = (exhaustParticle ship) : particles
+exhaustParticles :: StdGen -> MovementAction -> Ship -> [Particle] -> ([Particle], StdGen)
+exhaustParticles rndGen NoMovement _ particles = (particles,rndGen)
+exhaustParticles rndGen Thrust ship particles  = ((exhaustParticle ship (fst offset) (fst rndLife)) : particles, (snd rndLife))
+                                               where
+                                               offset = randomR (-1.5 ,1.5) rndGen
+                                               rndLife = randomR (0.5, 1.0) (snd offset)
 
-exhaustParticle :: Ship -> Particle
-exhaustParticle (Ship {sPos, sRot}) = Particle {
-                                      pPos = sPos .+. ((-cos sRot, -sin sRot) .* 32),
-                                      pVelocity = (-cos sRot, -sin sRot) ,
-                                      pColor = makeColor 0.5 0.5 0.5 0.2,
-                                      pTimer = 0.5,
-                                      pSize = 10
-                                      }
+exhaustParticle :: Ship -> Float -> Float -> Particle
+exhaustParticle (Ship {sPos, sRot}) offset rndLife = Particle {
+                                                     pPos = sPos .+. ((-cos sRot, -sin sRot) .* 32),
+                                                     pVelocity = (-cos sRot, -sin sRot) + ((sin sRot, -cos sRot) .* offset) ,
+                                                     pColor = makeColor 0.7 0.7 0.7 0.2,
+                                                     pTimer = rndLife,
+                                                     pSize = 10
+                                                     }
 
 -- | Helper functions
 
