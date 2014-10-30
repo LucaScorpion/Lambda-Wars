@@ -101,7 +101,7 @@ checkShCollisions enemies player time = ([e | e <- (filterNoPCol enemies player)
                                        updECol :: Ship -> Ship
                                        updECol playert@(Ship{..}) = if enemyCol playert && sInvuln <= 0 then hitPlayer playert else playert{sInvuln = sInvuln - time}
                                        enemyCol p = or (map (checkShipCollision p) enemies)
-                                       hitPlayer playert@(Ship{..}) = if sLifes > 0 then playert{sLifes = sLifes - 1, sInvuln = 2} else playert{sAlive = False}
+                                       hitPlayer playert@(Ship{..}) =playert{sLifes = sLifes - 1, sInvuln = 2}
 
 --Check if 2 ships collide
 checkShipCollision :: Ship -> Ship -> Bool
@@ -124,8 +124,7 @@ createEnemy pos spr = Ship {
                       sPower = 500,
                       sSize = 40,
 					  sLifes = 1,
-                      sInvuln = 0,
-                      sAlive = True
+                      sInvuln = 0
                       }
 
 --Spawn an enemy
