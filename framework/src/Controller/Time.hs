@@ -47,7 +47,7 @@ updateWorld time world@(World {..}) = world {
                                       newEnemy = if nextSpawn <= 0 then Just (createEnemy (fst spawnPos) (enemySpr !! 0)) else Nothing
                                       updPlayer = updatePlayer time player world
 									  -- Particle updating
-                                      updParticles = (fst exhParticles) ++ (updateParticles particles time 10) ++ (fst expParticles)
+                                      updParticles = (fst exhParticles) ++ (updateParticles particles time 10 0.3) ++ (fst expParticles)
                                       exhParticles = exhaustParticles (snd spawnPos) movementAction player
                                       expParticles = if isJust expPos then explosionParticles (snd exhParticles) 100 (fromJust expPos) else ([],(snd exhParticles)) 
                                       expPos = snd $ fst updBulCollisions
@@ -201,19 +201,23 @@ updFired time bullet@(Bullet{..}) = bullet {
 -- | Particles
 
 --Update particles
-updateParticles :: [Particle] -> Float -> Float -> [Particle]
-updateParticles [] _ _ = []
-updateParticles (x@(Particle {..}):xs) time sizeLerp = if pTimer > 0
-                                                       then updateParticle time sizeLerp x : updateParticles xs time sizeLerp
-                                                       else updateParticles xs time sizeLerp
+updateParticles :: [Particle] -> Float -> Float -> Float -> [Particle]
+updateParticles [] _ _ _ = []
+updateParticles (x@(Particle {..}):xs) time sL aL = if pTimer > 0
+                                                    then updateParticle time sL aL x : updateParticles xs time sL aL
+                                                    else updateParticles xs time sL aL
 
 
-updateParticle :: Float -> Float -> Particle -> Particle
-updateParticle time sizeLerp particle@(Particle {..}) = particle {
-                                                        pTimer = pTimer - time,
-                                                        pPos = pPos + pVelocity,
-                                                        pSize = pSize - sizeLerp * time
-                                                        }
+updateParticle :: Float -> Float -> Float -> Particle -> Particle
+updateParticle time sizeLerp alphaLerp particle@(Particle {..})
+    = particle {
+      pTimer = pTimer - time,
+      pPos = pPos + pVelocity,
+      pSize = pSize - sizeLerp * time,
+      pColor = makeColor (fst4 oldC) (snd4 oldC) (thd4 oldC) ((fth4 oldC) - alphaLerp * time)
+      }
+      where
+      oldC = rgbaOfColor pColor
 
 --Ship exhaust particles
 exhaustParticles :: RandomGen g => g -> MovementAction -> Ship -> ([Particle], g)
@@ -265,3 +269,9 @@ clampP value mn mx = (clampF (fst value) (fst mn) (fst mx),
 --Length of a point (vector)
 lengthP :: Point -> Float
 lengthP (x, y) = sqrt (x * x + y * y)
+
+--Quadruple
+fst4 (a, _, _, _) = a
+snd4 (_, a, _, _) = a
+thd4 (_, _, a, _) = a
+fth4 (_, _, _, a) = a
