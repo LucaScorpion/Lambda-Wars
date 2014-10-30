@@ -45,7 +45,9 @@ updateWorld time world@(World {..}) = world {
                                       newEnemy = if nextSpawn <= 0 then Just (createEnemy (fst spawnPos) (enemySpr !! 0)) else Nothing
                                       updPlayer = updatePlayer time player world
 									  -- Particle updating
-                                      exhParticles = exhaustParticles (snd spawnPos) movementAction player (updateParticles particles time 10)
+                                      updParticles = updateParticles particles time 10
+                                      exhParticles = exhaustParticles (snd spawnPos) movementAction player updParticles
+                                      expParticles = 
 									  
 
 --Update the player ship
@@ -228,18 +230,23 @@ exhaustParticle (Ship {sPos, sRot}) offset rndLife = Particle {
                                                      pSize = 10
                                                      }
 
---Explosion particles
-explosionParticle :: Point -> [Particle]
-explosionParticle pos = replicate 100 newParticle
-                      where
-                      newParticle = Particle {
-                                    pPos = pos,
-                                    pVelocity = (0, 0),
-                                    pColor = makeColor 1.0 0.5 0.0 1.0,
-                                    pTimer = 0.5,
-                                    pSize = 10
-                                    }
+--Explosion particles rndGen, Float, [Particle], Point
+explosionParticle :: stdGen -> Float -> Point -> [Particle] -> ([Particle],rndGen)
+explosionParticles rndGen 0 pos particles      = (particles,rndGen)
+explosionParticles rndGen amount pos particles = (newParticle : (fst otherexppar), snd otherexppar)
+                                              where
+                                              otherexppar = explosionParticles (snd rndVel) (amount -1) pos particles
+                                              newParticle = Particle {
+                                                            pPos = pos,
+                                                            pVelocity = fst rndVel,
+                                                            pColor = makeColor 1.0 0.5 0.0 1.0,
+                                                            pTimer = 0.5,
+                                                            pSize = 2
+                                                            }
+                                              rndVel = randomP (-1, 1) (-1,1) rndGen
 
+											  
+															
 -- | Helper functions
 
 --Clamp a float
