@@ -26,23 +26,28 @@ timeHandler time world@(World {..}) = if checkplayerlife player then updateWorld
                                      playerSpr (Ship{..}) = sSprite
 
 updateWorld time world@(World {..}) = world {
-                                      rndGen = snd spawnPos,
+                                      rndGen = snd rnds,
                                       player = snd updShCollisions,
                                       cameraPos = snd updPlayer,
                                       enemies = fst updShCollisions,
                                       bullets = snd updBulCollisions,
-                                      nextSpawn = if nextSpawn <= 0 then spawnTime else nextSpawn - time
+                                      nextSpawn = if nextSpawn <= 0 then spawnTime else nextSpawn - time,
+                                      particles = updParticles
                                       }
                                       where
+                                      rnds = split rndGen
                                       --Updated enemy and bullet list
                                       updBulCollisions = checkBulCollisions updEnemies updBullets
                                       updShCollisions = checkShCollisions (fst updBulCollisions) (fst updPlayer) time
                                       updEnemies = map (updateEnemy time world (fst updPlayer)) (spawnEnemy newEnemy enemies)
                                       updBullets = updateBullets shootAction time (delOldBullets bullets) (createBullet player)
                                       --Enemy spawning
-                                      spawnPos = randomP (-1000,1000) (-1000,1000) rndGen
+                                      spawnPos = randomP (-1000,1000) (-1000,1000) (fst rnds)
                                       newEnemy = if nextSpawn <= 0 then Just (createEnemy (fst spawnPos) (enemySpr !! 0)) else Nothing
                                       updPlayer = updatePlayer time player world
+									  -- Particle updating
+                                      updParticles = exhaustParticles movementAction player (updateParticles particles time)
+									  
 
 --Update the player ship
 updatePlayer :: Float -> Ship -> World -> (Ship, Point)
@@ -189,7 +194,11 @@ updFired time bullet@(Bullet{..}) = bullet {
 -- | Particles
 
 --Update particles
-updateParticles = map updateParticle
+updateParticles [] _        = []
+updateParticles (x:xs) time = if stillthere x then (updateParticle time x) : updateParticles xs time else updateParticles xs time
+                              where  
+                              stillthere (Particle{pTimer}) = pTimer > 0 
+
 
 updateParticle :: Float -> Particle -> Particle
 updateParticle time particle@(Particle {..}) = particle {
@@ -204,11 +213,11 @@ exhaustParticles Thrust ship particles  = (exhaustParticle ship) : particles
 
 exhaustParticle :: Ship -> Particle
 exhaustParticle (Ship {sPos, sRot}) = Particle {
+                                      pPos = sPos .+. ((-cos sRot, -sin sRot) .* 32),
+                                      pVelocity = (-cos sRot, -sin sRot) ,
+                                      pColor = makeColor 0.5 0.5 0.5 0.2,
                                       pTimer = 0.5,
-                                      pColor = greyN 0.5,
-                                      pSize = 2,
-                                      pPos = sPos .+. ((cos sRot, sin sRot) .* 32),
-                                      pVelocity = (0, 0)
+                                      pSize = 10
                                       }
 
 -- | Helper functions
