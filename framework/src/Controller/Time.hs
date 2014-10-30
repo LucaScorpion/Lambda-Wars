@@ -26,13 +26,13 @@ timeHandler time world@(World {..}) = if checkplayerlife player then updateWorld
                                      playerSpr (Ship{..}) = sSprite
 
 updateWorld time world@(World {..}) = world {
-                                      rndGen = snd updParticles,
+                                      rndGen = snd exhParticles,
                                       player = snd updShCollisions,
                                       cameraPos = snd updPlayer,
                                       enemies = fst updShCollisions,
                                       bullets = snd updBulCollisions,
                                       nextSpawn = if nextSpawn <= 0 then spawnTime else nextSpawn - time,
-                                      particles = fst updParticles
+                                      particles = fst exhParticles
                                       }
                                       where
                                       --Updated enemy and bullet list
@@ -45,7 +45,7 @@ updateWorld time world@(World {..}) = world {
                                       newEnemy = if nextSpawn <= 0 then Just (createEnemy (fst spawnPos) (enemySpr !! 0)) else Nothing
                                       updPlayer = updatePlayer time player world
 									  -- Particle updating
-                                      updParticles = exhaustParticles (snd spawnPos) movementAction player (updateParticles particles time)
+                                      exhParticles = exhaustParticles (snd spawnPos) movementAction player (updateParticles particles time 10)
 									  
 
 --Update the player ship
@@ -197,17 +197,19 @@ updFired time bullet@(Bullet{..}) = bullet {
 -- | Particles
 
 --Update particles
-updateParticles [] _        = []
-updateParticles (x:xs) time = if stillthere x then (updateParticle time x) : updateParticles xs time else updateParticles xs time
-                              where  
-                              stillthere (Particle{pTimer}) = pTimer > 0 
+updateParticles :: [Particle] -> Float -> Float -> [Particle]
+updateParticles [] _ _ = []
+updateParticles (x@(Particle {..}):xs) time sizeLerp = if pTimer > 0
+                                                       then updateParticle time sizeLerp x : updateParticles xs time sizeLerp
+                                                       else updateParticles xs time sizeLerp
 
 
-updateParticle :: Float -> Particle -> Particle
-updateParticle time particle@(Particle {..}) = particle {
-                                               pTimer = pTimer - time,
-                                               pPos = pPos + pVelocity
-                                               }
+updateParticle :: Float -> Float -> Particle -> Particle
+updateParticle time sizeLerp particle@(Particle {..}) = particle {
+                                                        pTimer = pTimer - time,
+                                                        pPos = pPos + pVelocity,
+                                                        pSize = pSize - sizeLerp * time
+                                                        }
 
 --Ship exhaust particles
 exhaustParticles :: StdGen -> MovementAction -> Ship -> [Particle] -> ([Particle], StdGen)
