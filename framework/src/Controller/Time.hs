@@ -129,7 +129,7 @@ createEnemy pos spr = Ship {
                       sFriction = 3,
                       sRotSpeed = 4,
                       sPower = 500,
-                      sSize = 40,
+                      sSize = 26,
 					  sLifes = 1,
                       sInvuln = 0
                       }

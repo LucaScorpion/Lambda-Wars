@@ -33,6 +33,6 @@ draw horizontalResolution verticalResolution (World{..})
       drawlives (Ship{..}) = drawlife sLifes
                              where
                              drawlife 0 = blank
-                             drawlife l = pictures[translate (horizontalResolution/2 - l * 52) (verticalResolution/2 - 40) sSprite, drawlife (l-1)]
+                             drawlife l = pictures[translate (horizontalResolution / 2 - l * 80) (verticalResolution / 2 - 40) sSprite, drawlife (l - 1)]
 
       drawParticle (Particle{..}) = translate (fst pPos)(snd pPos) (color pColor (circleSolid pSize))
