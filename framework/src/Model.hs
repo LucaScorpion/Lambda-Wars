@@ -65,7 +65,6 @@ data Ship = Ship {
     --Alive or dead
     sLifes      :: Float,
 	sInvuln     :: Float,
-    sAlive      :: Bool,
     --Reloading
     sReloadTime :: Float,
     sReloading  :: Float
@@ -121,7 +120,6 @@ createPlayer plSpr = Ship {
     sSize       = 40,
     sLifes      = 3,
     sInvuln     = 2,
-    sAlive      = True,
     sReloading  = 0,
     sReloadTime = 0.1
     }
