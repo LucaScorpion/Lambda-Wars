@@ -197,7 +197,7 @@ updateParticle time particle@(Particle {..}) = particle {
 
 --Ship exhaust particles
 exhaustParticles :: MovementAction -> Ship -> [Particle] -> [Particle]
-exhaustParticles NoMovement _ = id
+exhaustParticles NoMovement _ _ = id
 exhaustParticles Thrust ship particles = (exhaustParticle ship) : particles
 
 exhaustParticle :: Ship -> Particle
@@ -205,7 +205,7 @@ exhaustParticle (Ship {sPos, sRot}) = Particle {
                                       pTimer = 0.5,
                                       pColor = greyN 0.5,
                                       pSize = 2,
-                                      pPos = sPos,
+                                      pPos = sPos .+. ((cos sRot, sin sRot) .* 32),
                                       pVelocity = (0, 0)
                                       }
 
