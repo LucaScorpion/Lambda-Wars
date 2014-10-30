@@ -37,7 +37,7 @@ updateWorld time world@(World {..}) = world {
                                       where
                                       --Updated enemy and bullet list
                                       updBulCollisions = checkBulCollisions updEnemies updBullets
-                                      updShCollisions = checkShCollisions (fst updBulCollisions) (fst updPlayer) time
+                                      updShCollisions = checkShCollisions (fst $ fst updBulCollisions) (fst updPlayer) time
                                       updEnemies = map (updateEnemy time world (fst updPlayer)) (spawnEnemy newEnemy enemies)
                                       updBullets = updateBullets shootAction time (delOldBullets bullets) (createBullet player)
                                       --Enemy spawning
@@ -84,11 +84,15 @@ rotateShip NoRotation _ (Ship {sRot})                = sRot
 rotateShip RotateLeft time (Ship {sRot, sRotSpeed})  = sRot + sRotSpeed * time
 
 -- | Collisions
-checkBulCollisions :: [Ship] -> [Bullet] -> ([Ship], [Bullet])
+checkBulCollisions :: [Ship] -> [Bullet] -> (([Ship], Maybe Point), [Bullet])
 checkBulCollisions enemies bullets = (collideEnemy enemies, collideBullet bullets)
                                 where
-                                collideEnemy [] = []
-                                collideEnemy (x:xs) = if bullCol x then hitEnemy x ++ xs else x : (collideEnemy xs)
+                                collideEnemy [] = ([], Nothing)
+                                collideEnemy (x@(Ship {..}):xs) | bullCol x = (hitEnemy x ++ xs, mPos)
+                                                                | otherwise = (x : fst collRest, snd collRest)
+                                                                where
+                                                                mPos = if sLifes <= 0 then Just sPos else Nothing
+                                                                collRest = collideEnemy xs    
                                 bullCol enemy = or (map (checkBulletCollision enemy) bullets)
                                 collideBullet = filter (\ b -> not $ shipCol b)
                                 shipCol bullet = or (map (\ e -> checkBulletCollision e bullet) enemies)
@@ -221,6 +225,18 @@ exhaustParticle (Ship {sPos, sRot}) offset rndLife = Particle {
                                                      pTimer = rndLife,
                                                      pSize = 10
                                                      }
+
+--Explosion particles
+explosionParticle :: Point -> [Particle]
+explosionParticle pos = replicate 100 newParticle
+                      where
+                      newParticle = Particle {
+                                    pPos = pos,
+                                    pVelocity = (0, 0),
+                                    pColor = makeColor 1.0 0.5 0.0 1.0,
+                                    pTimer = 0.5,
+                                    pSize = 10
+                                    }
 
 -- | Helper functions
 
