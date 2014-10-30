@@ -8,6 +8,7 @@ module Controller.Time (
 import Control.Arrow ((>>>))
 
 import Data.List
+import Data.Maybe
 
 import Graphics.Gloss
 import Graphics.Gloss.Geometry
@@ -32,7 +33,8 @@ updateWorld time world@(World {..}) = world {
                                       enemies = fst updShCollisions,
                                       bullets = snd updBulCollisions,
                                       nextSpawn = if nextSpawn <= 0 then spawnTime else nextSpawn - time,
-                                      particles = fst exhParticles
+                                      particles = fst exhParticles,
+                                      score = if isJust explPos then score + 1 else score
                                       }
                                       where
                                       --Updated enemy and bullet list
@@ -45,6 +47,7 @@ updateWorld time world@(World {..}) = world {
                                       newEnemy = if nextSpawn <= 0 then Just (createEnemy (fst spawnPos) (enemySpr !! 0)) else Nothing
                                       updPlayer = updatePlayer time player world
 									  -- Particle updating
+                                      explPos = snd $ fst updBulCollisions
                                       exhParticles = exhaustParticles (snd spawnPos) movementAction player (updateParticles particles time 10)
 									  
 
@@ -88,10 +91,9 @@ checkBulCollisions :: [Ship] -> [Bullet] -> (([Ship], Maybe Point), [Bullet])
 checkBulCollisions enemies bullets = (collideEnemy enemies, collideBullet bullets)
                                 where
                                 collideEnemy [] = ([], Nothing)
-                                collideEnemy (x@(Ship {..}):xs) | bullCol x = (hitEnemy x ++ xs, mPos)
+                                collideEnemy (x@(Ship {..}):xs) | bullCol x = (hitEnemy x ++ xs, Just sPos)
                                                                 | otherwise = (x : fst collRest, snd collRest)
                                                                 where
-                                                                mPos = if sLifes <= 0 then Just sPos else Nothing
                                                                 collRest = collideEnemy xs    
                                 bullCol enemy = or (map (checkBulletCollision enemy) bullets)
                                 collideBullet = filter (\ b -> not $ shipCol b)
