@@ -158,7 +158,7 @@ updateEnemy time (World {..}) playert@(Ship {sPos = pPos}) enemy@(Ship {..}) = e
                                                   rotR = (if rotation >= pi || (rotation < -0.2 && rotation > -pi )  then RotateRight else rotL)
                                                   rotL = (if rotation <= -pi || (rotation > 0.2 && rotation < pi )  then RotateLeft else NoRotation)
                                                   rotation = normaliseAngle ((atan2 (dY / dist) (dX / dist)) - sRot)
-                                                  dist = sqrt (dX * dX + dY * dY)
+                                                  dist = lengthP (dX, dY)
                                                   dY = (snd pPos) - (snd sPos)
                                                   dX = (fst pPos) - (fst sPos)
                                                   newVelocity = calcVelocity time enemy
@@ -240,15 +240,15 @@ explosionParticles rndGen amount pos = (newParticle : (fst otherexppar), snd oth
                                               otherexppar = explosionParticles (snd rndA) (amount -1) pos
                                               newParticle = Particle {
                                                             pPos = pos,
-                                                            pVelocity = fst rndVel,
+                                                            pVelocity = (fst rndVel) ./ (max 1.0 (lengthP $ fst rndVel)) .* 1.5,
                                                             pColor = makeColor (fst rndR) (fst rndG) 0.0 (fst rndA),
                                                             pTimer = fst rndTime,
                                                             pSize = 2
                                                             }
                                               rndVel = randomP (-1, 1) (-1,1) rndGen
                                               rndTime = randomR (0.5, 1.5 :: Float) (snd rndVel)
-                                              rndR = randomR (0.5 :: Float, 1.0)  (snd rndTime)
-                                              rndG = randomR (0.0, 0.5 :: Float) (snd rndR)
+                                              rndR = randomR (0.6, 1.0 :: Float)  (snd rndTime)
+                                              rndG = randomR (0.0, 0.4 :: Float) (snd rndR)
                                               rndA = randomR (0.4, 0.7 :: Float) (snd rndG)
 															
 -- | Helper functions
@@ -261,3 +261,7 @@ clampF value mn mx = max (min value mx) mn
 clampP :: Point -> Point -> Point -> Point
 clampP value mn mx = (clampF (fst value) (fst mn) (fst mx),
                      clampF (snd value) (snd mn) (snd mx))
+
+--Length of a point (vector)
+lengthP :: Point -> Float
+lengthP (x, y) = sqrt (x * x + y * y)

@@ -26,5 +26,6 @@ infixl 6 .+., .-.
 (.-.) :: Point -> Point -> Point
 (x, y) .-. (z, w) = (x - z, y - w)
 
+--Get the distance between two points
 (.<>.) :: Point -> Point -> Float
-(x, y) .<>. (z, w) = sqrt $ (x - z)**2 + (y - w)**2
+(x, y) .<>. (z, w) = sqrt $ (x - z) ** 2 + (y - w) ** 2
