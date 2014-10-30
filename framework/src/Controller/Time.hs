@@ -36,7 +36,7 @@ updateWorld time world@(World {..}) = world {
                                       where
                                       --Updated enemy and bullet list
                                       updBulCollisions = checkBulCollisions updEnemies updBullets
-                                      updShCollisions = checkShCollisions updEnemies (fst updPlayer) time
+                                      updShCollisions = checkShCollisions (fst updBulCollisions) (fst updPlayer) time
                                       updEnemies = map (updateEnemy time world (fst updPlayer)) (spawnEnemy newEnemy enemies)
                                       updBullets = updateBullets shootAction time (delOldBullets bullets) (createBullet player)
                                       --Enemy spawning
@@ -81,12 +81,14 @@ rotateShip RotateLeft time (Ship {sRot, sRotSpeed})  = sRot + sRotSpeed * time
 
 -- | Collisions
 checkBulCollisions :: [Ship] -> [Bullet] -> ([Ship], [Bullet])
-checkBulCollisions enemies bullets = ([e | e <- filterNoBCol enemies], [b | b <- filterNoSCol bullets])
+checkBulCollisions enemies bullets = (collideEnemy enemies, collideBullet bullets)
                                 where
-                                filterNoBCol = filter (\ s -> not $ bullCol s)
-                                bullCol ship = or (map (checkBulletCollision ship) bullets)
-                                filterNoSCol = filter (\ b -> not $ shipCol b)
+                                collideEnemy [] = []
+                                collideEnemy (x:xs) = if bullCol x then hitEnemy x ++ xs else x : (collideEnemy xs)
+                                bullCol enemy = or (map (checkBulletCollision enemy) bullets)
+                                collideBullet = filter (\ b -> not $ shipCol b)
                                 shipCol bullet = or (map (\ e -> checkBulletCollision e bullet) enemies)
+                                hitEnemy enemy@(Ship{..}) = if sLifes > 1 then [enemy{sLifes = sLifes - 1, sInvuln = 1}] else []
                                 checkBulletCollision (Ship {sPos}) (Bullet {bPos}) = abs (sPos .<>. bPos) <= 32
 
 --Check for collision between 2 ships
