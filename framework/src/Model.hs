@@ -83,10 +83,6 @@ data Bullet = Bullet {
     bVelocity :: Point,
     bTimer    :: Float
     }
-		   
-data Item =   Multiplier {iPos :: Point, iPicture :: Picture, iTimer :: Float}
-             | Invulnerable {iPos :: Point, iPicture :: Picture, iTimer :: Float}
-            
 	
 data Particle = Particle {
     pPos      :: Point,
@@ -95,6 +91,10 @@ data Particle = Particle {
     pTimer    :: Float,
     pSize     :: Float
     }
+
+data Item = Multiplier {iPos :: Point, iPicture :: Picture, iTimer :: Float}
+          | Invulnerable {iPos :: Point, iPicture :: Picture, iTimer :: Float}
+          | Life {iPos :: Point, iPicture :: Picture, iTimer :: Float}
 
 --Generate the initial world
 initial :: Int -> [Picture] -> World
@@ -147,7 +147,9 @@ createPlayer plSpr = Ship {
     }
 
 createIPic :: [Picture]
-createIPic = [scale 0.3 0.3 (color yellow (text "p")), scale 0.3 0.3 (color blue (text "i"))]
+createIPic = [scale 0.3 0.3 (color yellow (text "+")),
+              scale 0.3 0.3 (color azure (text "I")),
+              scale 0.2 0.2 (color red (text "<3"))]
 	
 --Generate the stars
 generateStars :: World -> World

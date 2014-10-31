@@ -71,7 +71,7 @@ updateWorld time world@(World {..}) = world {
                                       updItems = updateItems time newItem
                                       itemPos = randomP (-1000,1000) (-1000,1000) (snd enemyExpParticles)
                                       newItem = if nextItem <= 0 then createItem (fst itemPos) (fst rndItem) iPic : items else items
-                                      rndItem = randomR (0, 1) (snd itemPos)
+                                      rndItem = randomR (0, 2) (snd itemPos)
 
 shipPos :: Ship -> Point
 shipPos (Ship {sPos}) = sPos
@@ -141,7 +141,7 @@ checkICollision player items = (collidePlayer, collideItem items)
                                 itemCol (x:xs) = if checkItemCollision player x then Just x else itemCol xs
                                 collideItem [] = []
                                 collideItem (x:xs) = if checkItemCollision player x then xs else x : collideItem xs
-                                checkItemCollision (Ship {sPos, sSize}) item = abs (sPos .<>. (getItempos item)) <= sSize
+                                checkItemCollision (Ship {sPos, sSize}) item = abs (sPos .<>. (getItempos item)) <= sSize + 20
 								
 								
 --Check for collision between 2 ships

@@ -8,6 +8,7 @@ import Graphics.Gloss
 import Graphics.Gloss.Geometry
 
 import Model
+import Items
 
 -- | Drawing
 
@@ -46,8 +47,5 @@ draw horizontalResolution verticalResolution (World{..})
       drawScore (Ship{sScore}) = translate
                                  (-horizontalResolution / 2 + 20)
                                  (verticalResolution / 2 - 50)
-				                 (scale 0.3 0.3 (color white $ text $ "Score: " ++ show sScore))
+				                 (scale 0.3 0.3 (color yellow $ text $ "Score: " ++ show sScore))
       drawParticle (Particle{..}) = translate (fst pPos)(snd pPos) (color pColor $ circleSolid pSize)
-	  
-      drawItem (Multiplier{..}) = translate (fst iPos) (snd iPos) iPicture
-      drawItem (Invulnerable{..}) = translate (fst iPos) (snd iPos) iPicture
