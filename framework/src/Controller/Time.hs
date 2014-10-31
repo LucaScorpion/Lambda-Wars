@@ -32,7 +32,7 @@ updateWorld time world@(World {..}) = world {
                                       rndGen = snd collExpParticles,
                                       player = snd updShCollisions,
                                       cameraPos = snd updPlayer,
-                                      enemies = fst $ fst updShCollisions,
+                                      enemies = if isJust playerHit then [] else fst $ fst updShCollisions,
                                       bullets = snd updBulCollisions,
                                       nextSpawn = if nextSpawn <= 0 then spawnTime else nextSpawn - time,
                                       exhaustP = updExhParticles,
