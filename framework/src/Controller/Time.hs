@@ -29,10 +29,10 @@ timeHandler time world@(World {..}) = if checkplayerlife player
                                     playerSpr (Ship{..}) = sSprite
 
 updateWorld time world@(World {..}) = world {
-                                      rndGen = snd collExpParticles,
+                                      rndGen = snd enemyExpParticles,
                                       player = snd updShCollisions,
                                       cameraPos = snd updPlayer,
-                                      enemies = if isJust playerHit then [] else fst $ fst updShCollisions,
+                                      enemies = if isJust playerHit then [] else enemyPoss,
                                       bullets = snd updBulCollisions,
                                       nextSpawn = if nextSpawn <= 0 then spawnTime else nextSpawn - time,
                                       exhaustP = updExhParticles,
@@ -53,11 +53,16 @@ updateWorld time world@(World {..}) = world {
                                       updExhParticles = fst exhParticles1 ++ fst exhParticles2 ++ updateParticles exhaustP time (-20) 0.5
                                       exhParticles1 = exhaustPlayParticles (snd spawnPos) movementAction player
                                       exhParticles2 = exhaustEnemyParticles (snd exhParticles1) enemies
-                                      updExpParticles = fst collExpParticles ++ fst expParticles ++ updateParticles explosionP time 10 1.0
-                                      expParticles = if isJust expPos then explosionParticles (snd exhParticles2) 200 3 (fromJust expPos) else ([],snd exhParticles2)
+                                      updExpParticles = fst enemyExpParticles ++ fst playerExpParticles ++ fst expParticles ++ updateParticles explosionP time 10 1.0
+                                      expParticles = if isJust expPos then explosionParticles (snd exhParticles2) 200 3 $ fromJust expPos else ([],snd exhParticles2)
                                       expPos = snd $ fst updBulCollisions
-                                      collExpParticles = if isJust playerHit then explosionParticles (snd expParticles) 1000 10 (fromJust playerHit) else ([], snd expParticles)
+                                      playerExpParticles = if isJust playerHit then explosionParticles (snd expParticles) 1000 10 $ fromJust playerHit else ([], snd expParticles)
                                       playerHit = snd $ fst updShCollisions
+                                      enemyPoss = fst $ fst updShCollisions
+                                      enemyExpParticles = if isJust playerHit then mulExplParticles (snd playerExpParticles) 200 3 $ map shipPos enemyPoss else ([], snd playerExpParticles)
+
+shipPos :: Ship -> Point
+shipPos (Ship {sPos}) = sPos
 
 --Update the player ship
 updatePlayer :: Float -> Ship -> World -> (Ship, Point)
@@ -106,7 +111,7 @@ checkBulCollisions enemies bullets = (collideEnemy enemies, collideBullet bullet
                                 bullCol enemy = or (map (checkBulletCollision enemy) bullets)
                                 collideBullet = filter (\ b -> not $ shipCol b)
                                 shipCol bullet = or (map (\ e -> checkBulletCollision e bullet) enemies)
-                                hitEnemy enemy@(Ship{..}) = if sLifes > 1 then [enemy{sLifes = sLifes - 1, sInvuln = 1}] else []
+                                hitEnemy enemy@(Ship{..}) = if sLifes > 1 then [enemy {sLifes = sLifes - 1, sInvuln = 1}] else []
                                 checkBulletCollision (Ship {sPos, sSize}) (Bullet {bPos}) = abs (sPos .<>. bPos) <= sSize
 
 --Check for collision between 2 ships
@@ -191,7 +196,7 @@ createBullet (Ship {sPos, sRot, sReloading}) = if sReloading <= 0 then Just newB
 updateBullets :: ShootAction -> Float -> [Bullet] -> Maybe Bullet -> [Bullet]
 updateBullets Shoot time bullets mBul  = case mBul of
                                          Nothing -> map (updFired time) bullets
-                                         Just bullet -> bullet : (map (updFired time) bullets)
+                                         Just bullet -> bullet : map (updFired time) bullets
 updateBullets DontShoot time bullets _ = map (updFired time) bullets
 
 --Remove old bullets
@@ -261,10 +266,9 @@ exhaustEnemyParticles rndGen (x:xs) = (newParticle x : (fst otherexhpar), snd ot
                                       offset  = randomR (-1.5 ,1.5) rndGen
                                       rndLife = randomR (0.4, 0.8) (snd offset)
 
---Explosion particles rndGen, Float, [Particle], Point
-explosionParticles :: RandomGen g => g -> Float -> Float -> Point -> ([Particle],g)
+explosionParticles :: RandomGen g => g -> Float -> Float -> Point -> ([Particle], g)
 explosionParticles rndGen 0 _ _         = ([],rndGen)
-explosionParticles rndGen amount sp pos = (newParticle : (fst otherexppar), snd otherexppar)
+explosionParticles rndGen amount sp pos = (newParticle : fst otherexppar, snd otherexppar)
                                               where
                                               otherexppar = explosionParticles (snd rndA) (amount - 1) sp pos
                                               newParticle = Particle {
@@ -279,7 +283,14 @@ explosionParticles rndGen amount sp pos = (newParticle : (fst otherexppar), snd 
                                               rndR    = randomR (0.6, 1.0 :: Float)  (snd rndLife)
                                               rndG    = randomR (0.0, 0.3 :: Float) (snd rndR)
                                               rndA    = randomR (0.4, 0.7 :: Float) (snd rndG)
-															
+
+mulExplParticles :: RandomGen g => g -> Float -> Float -> [Point] -> ([Particle], g)
+mulExplParticles rndGen amount sp [] = ([], rndGen)
+mulExplParticles rndGen amount sp (x:xs) = (fst thisExp ++ fst nextExp, snd nextExp)
+                                         where
+                                         thisExp = explosionParticles rndGen amount sp x
+                                         nextExp = mulExplParticles (snd thisExp) amount sp xs
+
 -- | Helper functions
 
 --Clamp a float
