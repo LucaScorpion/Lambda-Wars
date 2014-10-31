@@ -29,10 +29,10 @@ timeHandler time world@(World {..}) = if checkplayerlife player
                                     playerSpr (Ship{..}) = sSprite
 
 updateWorld time world@(World {..}) = world {
-                                      rndGen = snd expParticles,
+                                      rndGen = snd collExpParticles,
                                       player = snd updShCollisions,
                                       cameraPos = snd updPlayer,
-                                      enemies = fst updShCollisions,
+                                      enemies = fst $ fst updShCollisions,
                                       bullets = snd updBulCollisions,
                                       nextSpawn = if nextSpawn <= 0 then spawnTime else nextSpawn - time,
                                       exhaustP = updExhParticles,
@@ -53,9 +53,11 @@ updateWorld time world@(World {..}) = world {
                                       updExhParticles = fst exhParticles1 ++ fst exhParticles2 ++ updateParticles exhaustP time (-20) 0.5
                                       exhParticles1 = exhaustPlayParticles (snd spawnPos) movementAction player
                                       exhParticles2 = exhaustEnemyParticles (snd exhParticles1) enemies
-                                      updExpParticles = fst expParticles ++ updateParticles explosionP time 10 1.0
-                                      expParticles = if isJust expPos then explosionParticles (snd exhParticles2) 200 (fromJust expPos) else ([],snd exhParticles2)
+                                      updExpParticles = fst collExpParticles ++ fst expParticles ++ updateParticles explosionP time 10 1.0
+                                      expParticles = if isJust expPos then explosionParticles (snd exhParticles2) 200 3 (fromJust expPos) else ([],snd exhParticles2)
                                       expPos = snd $ fst updBulCollisions
+                                      collExpParticles = if isJust playerHit then explosionParticles (snd expParticles) 1000 10 (fromJust playerHit) else ([], snd expParticles)
+                                      playerHit = snd $ fst updShCollisions
 
 --Update the player ship
 updatePlayer :: Float -> Ship -> World -> (Ship, Point)
@@ -108,18 +110,22 @@ checkBulCollisions enemies bullets = (collideEnemy enemies, collideBullet bullet
                                 checkBulletCollision (Ship {sPos, sSize}) (Bullet {bPos}) = abs (sPos .<>. bPos) <= sSize
 
 --Check for collision between 2 ships
-checkShCollisions :: [Ship] -> Ship -> Float -> ([Ship], Ship)
-checkShCollisions enemies player time = ([e | e <- (filterNoPCol enemies player)], updECol player)
-                                       where
-								       -- check if enemy collides with player
-                                       filterNoPCol [] _ = []
-                                       filterNoPCol (x:xs) (Ship{..}) = if playCol x then xs else x:(filterNoPCol xs player)
-                                       playCol ship = checkShipCollision ship player
-						       		   -- check if player collides with enemy
-                                       updECol :: Ship -> Ship
-                                       updECol playert@(Ship{..}) = if enemyCol playert && sInvuln <= 0 then hitPlayer playert else playert{sInvuln = sInvuln - time}
-                                       enemyCol p = or (map (checkShipCollision p) enemies)
-                                       hitPlayer playert@(Ship{..}) =playert{sLifes = sLifes - 1, sInvuln = 2}
+checkShCollisions :: [Ship] -> Ship -> Float -> (([Ship], Maybe Point), Ship)
+checkShCollisions enemies player@(Ship {sPos}) time = (filterNoPCol enemies, updECol player)
+                                                    where
+                                                    --Check if enemy collides with player
+                                                    filterNoPCol [] = ([], Nothing)
+                                                    filterNoPCol (x:xs) | playCol x = (xs, Just sPos)
+                                                                        | otherwise = (x : fst collRest, snd collRest)
+                                                                        where
+                                                                        collRest = filterNoPCol xs
+                                                    playCol ship = checkShipCollision ship player
+                                                    --Check if player collides with enemy
+                                                    updECol p@(Ship {..}) = if enemyCol p && sInvuln <= 0
+                                                                            then hitPlayer p
+                                                                            else p { sInvuln = sInvuln - time }
+                                                    enemyCol p = or (map (checkShipCollision p) enemies)
+                                                    hitPlayer p@(Ship {..}) = p { sLifes = sLifes - 1, sInvuln = 2 }
 
 --Check if 2 ships collide
 checkShipCollision :: Ship -> Ship -> Bool
@@ -240,7 +246,6 @@ exhaustParticle (Ship {sPos, sRot}) offset rndLife = Particle {
                                                      pSize = 7
                                                      }
 
-
 exhaustEnemyParticles :: RandomGen g => g -> [Ship] -> ([Particle], g)
 exhaustEnemyParticles rndGen  []    = ([],rndGen)
 exhaustEnemyParticles rndGen (x:xs) = (newParticle x : (fst otherexhpar), snd otherexhpar)
@@ -257,14 +262,14 @@ exhaustEnemyParticles rndGen (x:xs) = (newParticle x : (fst otherexhpar), snd ot
                                       rndLife = randomR (0.4, 0.8) (snd offset)
 
 --Explosion particles rndGen, Float, [Particle], Point
-explosionParticles :: RandomGen g => g -> Float -> Point -> ([Particle],g)
-explosionParticles rndGen 0 pos      = ([],rndGen)
-explosionParticles rndGen amount pos = (newParticle : (fst otherexppar), snd otherexppar)
+explosionParticles :: RandomGen g => g -> Float -> Float -> Point -> ([Particle],g)
+explosionParticles rndGen 0 _ _         = ([],rndGen)
+explosionParticles rndGen amount sp pos = (newParticle : (fst otherexppar), snd otherexppar)
                                               where
-                                              otherexppar = explosionParticles (snd rndA) (amount -1) pos
+                                              otherexppar = explosionParticles (snd rndA) (amount - 1) sp pos
                                               newParticle = Particle {
                                                             pPos = pos,
-                                                            pVelocity = (fst rndVel) ./ (max 1.0 (lengthP $ fst rndVel)) .* 3,
+                                                            pVelocity = (fst rndVel) ./ (max 1.0 (lengthP $ fst rndVel)) .* sp,
                                                             pColor = makeColor (fst rndR) (fst rndG) 0.0 (fst rndA),
                                                             pTimer = fst rndLife,
                                                             pSize = 10
