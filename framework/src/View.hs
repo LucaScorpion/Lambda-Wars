@@ -22,9 +22,9 @@ draw horizontalResolution verticalResolution (World{..})
                     map drawShip enemies ++
                     map drawParticle exhaustP ++
                     map drawParticle explosionP ++
-                    map drawBullets bullets),
+                    map drawBullets bullets ++ map drawItem items),
       drawlives player,
-      drawScore
+      drawScore player
       ]
       where
       drawPlayer player@(Ship {..}) = if sLifes > 0
@@ -43,8 +43,11 @@ draw horizontalResolution verticalResolution (World{..})
                              where
                              drawlife 0 = blank
                              drawlife l = pictures[translate (horizontalResolution / 2 - l * 80) (verticalResolution / 2 - 40) sSprite, drawlife (l - 1)]
-      drawScore = translate
-                  (-horizontalResolution / 2 + 20)
-                  (verticalResolution / 2 - 50)
-				  (scale 0.3 0.3 (color white $ text $ "Score: " ++ show score))
+      drawScore (Ship{sScore}) = translate
+                                 (-horizontalResolution / 2 + 20)
+                                 (verticalResolution / 2 - 50)
+				                 (scale 0.3 0.3 (color white $ text $ "Score: " ++ show sScore))
       drawParticle (Particle{..}) = translate (fst pPos)(snd pPos) (color pColor $ circleSolid pSize)
+	  
+      drawItem (Multiplier{..}) = translate (fst iPos) (snd iPos) iPicture
+      drawItem (Invulnerable{..}) = translate (fst iPos) (snd iPos) iPicture

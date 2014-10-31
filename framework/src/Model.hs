@@ -32,9 +32,10 @@ data World = World {
 		--Camera
         cameraPos        :: Point,
         --Score
-        score            :: Int,
-        multiplier       :: Int,
-        multipliers      :: [Item],
+        items            :: [Item],
+        iPic             :: [Picture],
+        itemTime         :: Float,
+        nextItem         :: Float,
         --Particles
         exhaustP         :: [Particle],
         explosionP       :: [Particle]
@@ -68,9 +69,13 @@ data Ship = Ship {
     --Alive or dead
     sLifes      :: Float,
 	sInvuln     :: Float,
+    sScore      :: Int,
+    sMultiply   :: Int,
     --Reloading
     sReloadTime :: Float,
-    sReloading  :: Float
+    sReloading  :: Float,
+    sItemtime   :: Float,
+    sEffects    :: [Item]
     }
 
 data Bullet = Bullet {
@@ -78,8 +83,10 @@ data Bullet = Bullet {
     bVelocity :: Point,
     bTimer    :: Float
     }
-
-data Item = Multiplier {mPos :: Point, mPicture :: Picture, mTimer :: Float} | Invulnerable {mPos :: Point, mPicture :: Picture, mTimer :: Float}
+		   
+data Item =   Multiplier {iPos :: Point, iPicture :: Picture, iTimer :: Float}
+             | Invulnerable {iPos :: Point, iPicture :: Picture, iTimer :: Float}
+            
 	
 data Particle = Particle {
     pPos      :: Point,
@@ -108,9 +115,10 @@ initial seed (pl:en) = generateStars newWorld
                               nextSpawn      = 3,
                               bullets        = [],
                               cameraPos      = (0, 0),
-                              score          = 0,
-							  multiplier     = 1,
-							  multipliers    = [],
+							  items          = [],
+                              iPic           = createIPic,
+                              itemTime       = 15,
+                              nextItem       = 10,
                               exhaustP       = [],
                               explosionP     = []
                               }
@@ -129,11 +137,18 @@ createPlayer plSpr = Ship {
     sPower      = 500,
     sSize       = 26,
     sLifes      = 3,
-    sInvuln     = 2,
+    sInvuln     = 0,
+    sScore      = 0,
+    sMultiply   = 1,
     sReloading  = 0,
-    sReloadTime = 0.1
+    sReloadTime = 0.1,
+    sItemtime   = 0,
+    sEffects    = []
     }
 
+createIPic :: [Picture]
+createIPic = [scale 0.3 0.3 (color yellow (text "p")), scale 0.3 0.3 (color blue (text "i"))]
+	
 --Generate the stars
 generateStars :: World -> World
 generateStars world@(World {rndGen, stars}) = world { rndGen = fst rnds, stars = newStars amount }

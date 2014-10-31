@@ -31,27 +31,31 @@ timeHandler time world@(World {..}) = if alive player || invuln player
                                     playerSpr (Ship {sSprite}) = sSprite
 
 updateWorld time world@(World {..}) = world {
-                                      rndGen = snd enemyExpParticles,
-                                      player = snd updShCollisions,
-                                      cameraPos = snd updPlayer,
-                                      enemies = if isJust playerHit then [] else enemyPoss,
-                                      bullets = snd updBulCollisions,
-                                      nextSpawn = if nextSpawn <= 0 then spawnTime else nextSpawn - time,
-                                      exhaustP = updExhParticles,
-                                      explosionP = updExpParticles,
-                                      score = if isJust expPos then score + 1 else score
+                                      rndGen     = snd rndItem,
+                                      player     = fst updItemCollisions,
+                                      cameraPos  = snd updPlayer,
+                                      enemies    = if isJust playerHit then [] else enemyPoss,
+                                      bullets    = snd updBulCollisions,
+                                      nextSpawn  = if nextSpawn <= 0 then spawnTime else nextSpawn - time,
+									  items      = snd updItemCollisions,
+                                      nextItem   = if nextItem <= 0 then itemTime else nextItem - time,
+                                      exhaustP   = updExhParticles,
+                                      explosionP = updExpParticles
                                       }
                                       where
                                       --Updated enemy and bullet list
                                       updBulCollisions = checkBulCollisions updEnemies updBullets
+                                      expPos = snd $ fst updBulCollisions
                                       updShCollisions = checkShCollisions (fst $ fst updBulCollisions) (fst updPlayer) time
-                                      updEnemies = map (updateEnemy time world $ fst updPlayer) (spawnEnemy newEnemy enemies)
+                                      playerHit = snd $ fst updShCollisions
+                                      enemyPoss = fst $ fst updShCollisions
+                                      updEnemies = map (updateEnemy time world $ player) newEnemy
                                       updBullets = updateBullets shooting time (delOldBullets bullets) (createBullet player)
                                       shooting = if shipAlive player then shootAction else DontShoot
                                       --Enemy spawning
                                       spawnPos = randomP (-1000,1000) (-1000,1000) rndGen
-                                      newEnemy = if nextSpawn <= 0 then Just (createEnemy (fst spawnPos) (enemySpr !! 0)) else Nothing
-                                      updPlayer = updatePlayer time player world
+                                      newEnemy = if nextSpawn <= 0 then (createEnemy (fst spawnPos) (enemySpr !! 0) : enemies)  else enemies
+                                      updPlayer = updatePlayer time player world (isJust expPos)
 									  -- Particle updating
                                       updExhParticles = fst exhParticles1 ++ fst exhParticles2 ++ updateParticles exhaustP time (-20) 0.5
                                       exhParticles1 = exhaustPlayParticles (snd spawnPos) moving player
@@ -59,11 +63,14 @@ updateWorld time world@(World {..}) = world {
                                       exhParticles2 = exhaustEnemyParticles (snd exhParticles1) enemies
                                       updExpParticles = fst enemyExpParticles ++ fst playerExpParticles ++ fst expParticles ++ updateParticles explosionP time 10 1.0
                                       expParticles = if isJust expPos then explosionParticles (snd exhParticles2) 200 3 $ fromJust expPos else ([],snd exhParticles2)
-                                      expPos = snd $ fst updBulCollisions
                                       playerExpParticles = if isJust playerHit then explosionParticles (snd expParticles) 1000 10 $ fromJust playerHit else ([], snd expParticles)
-                                      playerHit = snd $ fst updShCollisions
-                                      enemyPoss = fst $ fst updShCollisions
                                       enemyExpParticles = if isJust playerHit then mulExplParticles (snd playerExpParticles) 200 3 $ map shipPos enemyPoss else ([], snd playerExpParticles)
+									  -- Item updating
+                                      updItemCollisions = checkICollision (snd updShCollisions) updItems
+                                      updItems = updateItems time newItem
+                                      itemPos = randomP (-1000,1000) (-1000,1000) (snd enemyExpParticles)
+                                      newItem = if nextItem <= 0 then createItem (fst itemPos) (fst rndItem) iPic : items else items
+                                      rndItem = randomR (0, 1) (snd itemPos)
 
 shipPos :: Ship -> Point
 shipPos (Ship {sPos}) = sPos
@@ -72,14 +79,15 @@ shipAlive :: Ship -> Bool
 shipAlive (Ship {sLifes}) = sLifes > 0
 
 --Update the player ship
-updatePlayer :: Float -> Ship -> World -> (Ship, Point)
-updatePlayer time pl@(Ship {..}) (World {..})
+updatePlayer :: Float -> Ship -> World -> Bool -> (Ship, Point)
+updatePlayer time pl@(Ship {..}) (World {..}) plusscore
     = (pl {
     sPos = newPos,
     sRot = normaliseAngle (rotateShip rotateAction time player),
     sVelocity = newVelocity,
     sForce = if sLifes > 0 then calcThrust movementAction player else (0, 0),
-    sReloading = rldTime
+    sReloading = rldTime,
+    sScore = if plusscore then sScore + sMultiply else sScore
     }, newPos)
     where
     rldTime = if shootAction == Shoot && sReloading <= 0
@@ -108,7 +116,7 @@ rotateShip RotateLeft time (Ship {sRot, sRotSpeed})  = sRot + sRotSpeed * time
 
 -- | Collisions
 checkBulCollisions :: [Ship] -> [Bullet] -> (([Ship], Maybe Point), [Bullet])
-checkBulCollisions enemies bullets = (collideEnemy enemies, collideBullet bullets)
+checkBulCollisions enemies bullets = (collideEnemy enemies, collideBullet)
                                 where
                                 collideEnemy [] = ([], Nothing)
                                 collideEnemy (x@(Ship {..}):xs) | bullCol x = (hitEnemy x ++ xs, Just sPos)
@@ -116,11 +124,25 @@ checkBulCollisions enemies bullets = (collideEnemy enemies, collideBullet bullet
                                                                 where
                                                                 collRest = collideEnemy xs    
                                 bullCol enemy = or (map (checkBulletCollision enemy) bullets)
-                                collideBullet = filter (\ b -> not $ shipCol b)
+                                collideBullet = filter (\b -> not $ shipCol b) bullets
                                 shipCol bullet = or (map (\ e -> checkBulletCollision e bullet) enemies)
                                 hitEnemy enemy@(Ship{..}) = if sLifes > 1 then [enemy {sLifes = sLifes - 1, sInvuln = 1}] else []
-                                checkBulletCollision (Ship {sPos, sSize}) (Bullet {bPos}) = abs (sPos .<>. bPos) <= sSize
+                                checkBulletCollision (Ship {sPos, sSize}) (Bullet{bPos}) = abs (sPos .<>. bPos) <= sSize
 
+
+checkICollision :: Ship -> [Item] -> (Ship,[Item])
+checkICollision player items = (collidePlayer, collideItem items)
+                                where
+                                collidePlayer = case itemCol items of
+                                                Nothing -> player
+                                                Just x -> applyItem player x
+                                itemCol []     = Nothing
+                                itemCol (x:xs) = if checkItemCollision player x then Just x else itemCol xs
+                                collideItem [] = []
+                                collideItem (x:xs) = if checkItemCollision player x then xs else x : collideItem xs
+                                checkItemCollision (Ship {sPos, sSize}) item = abs (sPos .<>. (getItempos item)) <= sSize
+								
+								
 --Check for collision between 2 ships
 checkShCollisions :: [Ship] -> Ship -> Float -> (([Ship], Maybe Point), Ship)
 checkShCollisions enemies player@(Ship {sPos}) time = (filterNoPCol enemies, updECol player)
@@ -159,14 +181,8 @@ createEnemy pos spr = Ship {
                       sRotSpeed = 4,
                       sPower = 250,
                       sSize = 26,
-					  sLifes = 1,
-                      sInvuln = 0
+					  sLifes = 1
                       }
-
---Spawn an enemy
-spawnEnemy mShip enemies = case mShip of
-                           Nothing -> enemies
-                           Just ship -> ship : enemies
 
 --Update an enemy ship
 updateEnemy :: Float -> World -> Ship -> Ship -> Ship
@@ -219,3 +235,25 @@ updFired time bullet@(Bullet{..}) = bullet {
                                     bPos = bPos .+. bVelocity,
                                     bTimer = bTimer - time
                                     }
+									
+-- | Item updater
+createItem :: Point -> Int -> [Picture] -> Item
+createItem pos 0 pics =  Multiplier{iPos = pos , iPicture = pics!!0 , iTimer = 150} -- make a multiplier
+createItem pos 1 pics =  Invulnerable{iPos = pos, iPicture = pics!!1, iTimer = 100} -- make a Invulnerable
+
+updateItems :: Float -> [Item] -> [Item]
+updateItems _ []        = [] 
+updateItems time (x:xs) = if isJust thisItem then fromJust thisItem : otherItems else otherItems
+                          where
+                          otherItems = updateItems time xs
+                          thisItem = updateItem time x
+
+updateItem :: Float -> Item -> Maybe Item
+updateItem time item @(Multiplier{..})   = if iTimer > 0 then Just (item{iTimer = iTimer -time}) else Nothing
+updateItem time item @(Invulnerable{..}) = if iTimer > 0 then Just (item{iTimer = iTimer -time}) else Nothing
+
+getItempos (Multiplier{iPos}) = iPos
+getItempos (Invulnerable{iPos}) = iPos
+
+applyItem ship@(Ship{..}) (Multiplier{..}) = ship{sMultiply = sMultiply + 1}
+applyItem ship@(Ship{..}) (Invulnerable{..}) = ship{sInvuln = 5}
