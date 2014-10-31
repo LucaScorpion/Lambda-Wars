@@ -50,9 +50,9 @@ updateWorld time world@(World {..}) = world {
                                       newEnemy = if nextSpawn <= 0 then Just (createEnemy (fst spawnPos) (enemySpr !! 0)) else Nothing
                                       updPlayer = updatePlayer time player world
 									  -- Particle updating
-                                      updExhParticles = fst exhParticles ++ updateParticles exhaustP time 10 0.3
+                                      updExhParticles = fst exhParticles ++ updateParticles exhaustP time (-20) 0.5
                                       exhParticles = exhaustParticles (snd spawnPos) movementAction player
-                                      updExpParticles = fst expParticles ++ updateParticles explosionP time 10 0.5
+                                      updExpParticles = fst expParticles ++ updateParticles explosionP time 10 1.0
                                       expParticles = if isJust expPos then explosionParticles (snd exhParticles) 200 (fromJust expPos) else ([],snd exhParticles)
                                       expPos = snd $ fst updBulCollisions
 
@@ -228,15 +228,15 @@ exhaustParticles rndGen NoMovement _= ([],rndGen)
 exhaustParticles rndGen Thrust ship  = ([exhaustParticle ship (fst offset) (fst rndLife)], (snd rndLife))
                                                where
                                                offset = randomR (-1.5 ,1.5) rndGen
-                                               rndLife = randomR (0.5, 1.0) (snd offset)
+                                               rndLife = randomR (0.4, 0.8) (snd offset)
 
 exhaustParticle :: Ship -> Float -> Float -> Particle
 exhaustParticle (Ship {sPos, sRot}) offset rndLife = Particle {
                                                      pPos = sPos .+. ((-cos sRot, -sin sRot) .* 32),
-                                                     pVelocity = (-cos sRot, -sin sRot) + ((sin sRot, -cos sRot) .* offset) ,
+                                                     pVelocity = (-cos sRot, -sin sRot) .* 2 + ((sin sRot, -cos sRot) .* offset) ,
                                                      pColor = makeColor 0.7 0.7 0.7 0.2,
                                                      pTimer = rndLife,
-                                                     pSize = 10
+                                                     pSize = 7
                                                      }
 
 --Explosion particles rndGen, Float, [Particle], Point
@@ -247,13 +247,13 @@ explosionParticles rndGen amount pos = (newParticle : (fst otherexppar), snd oth
                                               otherexppar = explosionParticles (snd rndA) (amount -1) pos
                                               newParticle = Particle {
                                                             pPos = pos,
-                                                            pVelocity = (fst rndVel) ./ (max 1.0 (lengthP $ fst rndVel)) .* 1.5,
+                                                            pVelocity = (fst rndVel) ./ (max 1.0 (lengthP $ fst rndVel)) .* 3,
                                                             pColor = makeColor (fst rndR) (fst rndG) 0.0 (fst rndA),
                                                             pTimer = fst rndTime,
                                                             pSize = 10
                                                             }
                                               rndVel = randomP (-1, 1) (-1,1) rndGen
-                                              rndTime = randomR (0.5, 1.5 :: Float) (snd rndVel)
+                                              rndTime = randomR (0.3, 1.0 :: Float) (snd rndVel)
                                               rndR = randomR (0.6, 1.0 :: Float)  (snd rndTime)
                                               rndG = randomR (0.0, 0.3 :: Float) (snd rndR)
                                               rndA = randomR (0.4, 0.7 :: Float) (snd rndG)
