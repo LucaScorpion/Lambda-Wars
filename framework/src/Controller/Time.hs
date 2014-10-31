@@ -21,10 +21,12 @@ import PointOperators
 -- | Time handling
 
 timeHandler :: Float -> World -> World
-timeHandler time world@(World {..}) = if checkplayerlife player then updateWorld time world else initial (fst(random rndGen)) ((playerSpr player):enemySpr)
-                                     where 
-                                     checkplayerlife (Ship{..}) = sLifes > 0
-                                     playerSpr (Ship{..}) = sSprite
+timeHandler time world@(World {..}) = if checkplayerlife player
+                                      then updateWorld time world
+                                      else initial (fst $ random rndGen) (playerSpr player : enemySpr)
+                                    where 
+                                    checkplayerlife (Ship{..}) = sLifes > 0
+                                    playerSpr (Ship{..}) = sSprite
 
 updateWorld time world@(World {..}) = world {
                                       rndGen = snd expParticles,
@@ -33,25 +35,26 @@ updateWorld time world@(World {..}) = world {
                                       enemies = fst updShCollisions,
                                       bullets = snd updBulCollisions,
                                       nextSpawn = if nextSpawn <= 0 then spawnTime else nextSpawn - time,
-                                      particles = updParticles,
+                                      exhaustP = updExhParticles,
+                                      explosionP = updExpParticles,
                                       score = if isJust expPos then score + 1 else score
                                       }
                                       where
                                       --Updated enemy and bullet list
                                       updBulCollisions = checkBulCollisions updEnemies updBullets
                                       updShCollisions = checkShCollisions (fst $ fst updBulCollisions) (fst updPlayer) time
-                                      updEnemies = map (updateEnemy time world (fst updPlayer)) (spawnEnemy newEnemy enemies)
+                                      updEnemies = map (updateEnemy time world $ fst updPlayer) (spawnEnemy newEnemy enemies)
                                       updBullets = updateBullets shootAction time (delOldBullets bullets) (createBullet player)
                                       --Enemy spawning
                                       spawnPos = randomP (-1000,1000) (-1000,1000) rndGen
                                       newEnemy = if nextSpawn <= 0 then Just (createEnemy (fst spawnPos) (enemySpr !! 0)) else Nothing
                                       updPlayer = updatePlayer time player world
 									  -- Particle updating
-                                      updParticles = (fst exhParticles) ++ (updateParticles particles time 10 0.3) ++ (fst expParticles)
+                                      updExhParticles = fst exhParticles ++ updateParticles exhaustP time 10 0.3
                                       exhParticles = exhaustParticles (snd spawnPos) movementAction player
-                                      expParticles = if isJust expPos then explosionParticles (snd exhParticles) 100 (fromJust expPos) else ([],(snd exhParticles)) 
+                                      updExpParticles = fst expParticles ++ updateParticles explosionP time 10 0.5
+                                      expParticles = if isJust expPos then explosionParticles (snd exhParticles) 200 (fromJust expPos) else ([],snd exhParticles)
                                       expPos = snd $ fst updBulCollisions
-									  
 
 --Update the player ship
 updatePlayer :: Float -> Ship -> World -> (Ship, Point)
@@ -247,12 +250,12 @@ explosionParticles rndGen amount pos = (newParticle : (fst otherexppar), snd oth
                                                             pVelocity = (fst rndVel) ./ (max 1.0 (lengthP $ fst rndVel)) .* 1.5,
                                                             pColor = makeColor (fst rndR) (fst rndG) 0.0 (fst rndA),
                                                             pTimer = fst rndTime,
-                                                            pSize = 2
+                                                            pSize = 10
                                                             }
                                               rndVel = randomP (-1, 1) (-1,1) rndGen
                                               rndTime = randomR (0.5, 1.5 :: Float) (snd rndVel)
                                               rndR = randomR (0.6, 1.0 :: Float)  (snd rndTime)
-                                              rndG = randomR (0.0, 0.4 :: Float) (snd rndR)
+                                              rndG = randomR (0.0, 0.3 :: Float) (snd rndR)
                                               rndA = randomR (0.4, 0.7 :: Float) (snd rndG)
 															
 -- | Helper functions

@@ -34,7 +34,8 @@ data World = World {
         --Score
         score            :: Int,
         --Particles
-        particles        :: [Particle]
+        exhaustP         :: [Particle],
+        explosionP       :: [Particle]
         }
 
 --Actions
@@ -104,7 +105,8 @@ initial seed (pl:en) = generateStars newWorld
                               bullets        = [],
                               cameraPos      = (0, 0),
                               score          = 0,
-                              particles      = []
+                              exhaustP       = [],
+                              explosionP     = []
                               }
 
 --Create a player ship
