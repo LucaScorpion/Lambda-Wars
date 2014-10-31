@@ -21,12 +21,13 @@ import PointOperators
 -- | Time handling
 
 timeHandler :: Float -> World -> World
-timeHandler time world@(World {..}) = if checkplayerlife player
+timeHandler time world@(World {..}) = if alive player || invuln player
                                       then updateWorld time world
                                       else initial (fst $ random rndGen) (playerSpr player : enemySpr)
                                     where 
-                                    checkplayerlife (Ship{..}) = sLifes > 0
-                                    playerSpr (Ship{..}) = sSprite
+                                    alive (Ship {sLifes}) = sLifes > 0
+                                    invuln (Ship {sInvuln}) = sInvuln > 0
+                                    playerSpr (Ship {sSprite}) = sSprite
 
 updateWorld time world@(World {..}) = world {
                                       rndGen = snd enemyExpParticles,
@@ -44,14 +45,16 @@ updateWorld time world@(World {..}) = world {
                                       updBulCollisions = checkBulCollisions updEnemies updBullets
                                       updShCollisions = checkShCollisions (fst $ fst updBulCollisions) (fst updPlayer) time
                                       updEnemies = map (updateEnemy time world $ fst updPlayer) (spawnEnemy newEnemy enemies)
-                                      updBullets = updateBullets shootAction time (delOldBullets bullets) (createBullet player)
+                                      updBullets = updateBullets shooting time (delOldBullets bullets) (createBullet player)
+                                      shooting = if shipAlive player then shootAction else DontShoot
                                       --Enemy spawning
                                       spawnPos = randomP (-1000,1000) (-1000,1000) rndGen
                                       newEnemy = if nextSpawn <= 0 then Just (createEnemy (fst spawnPos) (enemySpr !! 0)) else Nothing
                                       updPlayer = updatePlayer time player world
 									  -- Particle updating
                                       updExhParticles = fst exhParticles1 ++ fst exhParticles2 ++ updateParticles exhaustP time (-20) 0.5
-                                      exhParticles1 = exhaustPlayParticles (snd spawnPos) movementAction player
+                                      exhParticles1 = exhaustPlayParticles (snd spawnPos) moving player
+                                      moving = if shipAlive player then movementAction else NoMovement
                                       exhParticles2 = exhaustEnemyParticles (snd exhParticles1) enemies
                                       updExpParticles = fst enemyExpParticles ++ fst playerExpParticles ++ fst expParticles ++ updateParticles explosionP time 10 1.0
                                       expParticles = if isJust expPos then explosionParticles (snd exhParticles2) 200 3 $ fromJust expPos else ([],snd exhParticles2)
@@ -64,6 +67,9 @@ updateWorld time world@(World {..}) = world {
 shipPos :: Ship -> Point
 shipPos (Ship {sPos}) = sPos
 
+shipAlive :: Ship -> Bool
+shipAlive (Ship {sLifes}) = sLifes > 0
+
 --Update the player ship
 updatePlayer :: Float -> Ship -> World -> (Ship, Point)
 updatePlayer time pl@(Ship {..}) (World {..})
@@ -71,7 +77,7 @@ updatePlayer time pl@(Ship {..}) (World {..})
     sPos = newPos,
     sRot = normaliseAngle (rotateShip rotateAction time player),
     sVelocity = newVelocity,
-    sForce = calcThrust movementAction player,
+    sForce = if sLifes > 0 then calcThrust movementAction player else (0, 0),
     sReloading = rldTime
     }, newPos)
     where

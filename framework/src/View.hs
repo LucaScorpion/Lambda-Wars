@@ -18,6 +18,7 @@ draw horizontalResolution verticalResolution (World{..})
       translate (-fst cameraPos) (-snd cameraPos) 
       (pictures  $ (color violet (rectangleWire 2000 2000)) :
                     drawPlayer player :
+                    drawShield player :
                     map drawShip enemies ++
                     map drawParticle exhaustP ++
                     map drawParticle explosionP ++
@@ -26,10 +27,12 @@ draw horizontalResolution verticalResolution (World{..})
       drawScore
       ]
       where
-      drawPlayer (Ship{..}) = translate (fst sPos)(snd sPos) (pictures [rotate (-radToDeg sRot - 90) sSprite,
-	                                                          if sInvuln > 0
-                                                              then color blue $ circle  40
-                                                              else blank])
+      drawPlayer player@(Ship {..}) = if sLifes > 0
+                                      then translate (fst sPos)(snd sPos) (rotate (-radToDeg sRot - 90) sSprite)
+                                      else blank
+      drawShield (Ship {..}) = if sInvuln > 0 && sLifes > 0
+                               then translate (fst sPos)(snd sPos) (color blue $ circle  40)
+                               else blank
       drawShip (Ship{..}) = translate (fst sPos)(snd sPos) (rotate ((-radToDeg sRot) - 90) sSprite)
       drawStars ((x,y),z) = translate
                             (worldWidth * x - 0.7 * (fst cameraPos * z))
