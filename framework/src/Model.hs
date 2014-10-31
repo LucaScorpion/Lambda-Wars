@@ -33,6 +33,8 @@ data World = World {
         cameraPos        :: Point,
         --Score
         score            :: Int,
+        multiplier       :: Int,
+        multipliers      :: [Item],
         --Particles
         exhaustP         :: [Particle],
         explosionP       :: [Particle]
@@ -77,6 +79,8 @@ data Bullet = Bullet {
     bTimer    :: Float
     }
 
+data Item = Multiplier {mPos :: Point, mPicture :: Picture, mTimer :: Float} | Invulnerable {mPos :: Point, mPicture :: Picture, mTimer :: Float}
+	
 data Particle = Particle {
     pPos      :: Point,
     pVelocity :: Point,
@@ -105,6 +109,8 @@ initial seed (pl:en) = generateStars newWorld
                               bullets        = [],
                               cameraPos      = (0, 0),
                               score          = 0,
+							  multiplier     = 1,
+							  multipliers    = [],
                               exhaustP       = [],
                               explosionP     = []
                               }

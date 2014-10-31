@@ -50,10 +50,11 @@ updateWorld time world@(World {..}) = world {
                                       newEnemy = if nextSpawn <= 0 then Just (createEnemy (fst spawnPos) (enemySpr !! 0)) else Nothing
                                       updPlayer = updatePlayer time player world
 									  -- Particle updating
-                                      updExhParticles = fst exhParticles ++ updateParticles exhaustP time (-20) 0.5
-                                      exhParticles = exhaustParticles (snd spawnPos) movementAction player
+                                      updExhParticles = fst exhParticles1 ++ fst exhParticles2 ++ updateParticles exhaustP time (-20) 0.5
+                                      exhParticles1 = exhaustPlayParticles (snd spawnPos) movementAction player
+                                      exhParticles2 = exhaustEnemyParticles (snd exhParticles1) enemies
                                       updExpParticles = fst expParticles ++ updateParticles explosionP time 10 1.0
-                                      expParticles = if isJust expPos then explosionParticles (snd exhParticles) 200 (fromJust expPos) else ([],snd exhParticles)
+                                      expParticles = if isJust expPos then explosionParticles (snd exhParticles2) 200 (fromJust expPos) else ([],snd exhParticles2)
                                       expPos = snd $ fst updBulCollisions
 
 --Update the player ship
@@ -223,9 +224,9 @@ updateParticle time sizeLerp alphaLerp particle@(Particle {..})
       oldC = rgbaOfColor pColor
 
 --Ship exhaust particles
-exhaustParticles :: RandomGen g => g -> MovementAction -> Ship -> ([Particle], g)
-exhaustParticles rndGen NoMovement _= ([],rndGen)
-exhaustParticles rndGen Thrust ship  = ([exhaustParticle ship (fst offset) (fst rndLife)], (snd rndLife))
+exhaustPlayParticles :: RandomGen g => g -> MovementAction -> Ship -> ([Particle], g)
+exhaustPlayParticles rndGen NoMovement _= ([],rndGen)
+exhaustPlayParticles rndGen Thrust ship  = ([exhaustParticle ship (fst offset) (fst rndLife)], (snd rndLife))
                                                where
                                                offset = randomR (-1.5 ,1.5) rndGen
                                                rndLife = randomR (0.4, 0.8) (snd offset)
@@ -239,6 +240,22 @@ exhaustParticle (Ship {sPos, sRot}) offset rndLife = Particle {
                                                      pSize = 7
                                                      }
 
+
+exhaustEnemyParticles :: RandomGen g => g -> [Ship] -> ([Particle], g)
+exhaustEnemyParticles rndGen  []    = ([],rndGen)
+exhaustEnemyParticles rndGen (x:xs) = (newParticle x : (fst otherexhpar), snd otherexhpar)
+                                      where
+                                      otherexhpar = exhaustEnemyParticles (snd rndLife) xs
+                                      newParticle (Ship{..})  = Particle {
+                                                                pPos = sPos .+. ((-cos sRot, -sin sRot) .* 25),
+                                                                pVelocity = (-cos sRot, -sin sRot) .* 2 + ((sin sRot, -cos sRot) .* (fst offset)) ,
+                                                                pColor = makeColor 0.7 0.7 0.7 0.2,
+                                                                pTimer = fst rndLife,
+                                                                pSize = 7
+                                                                }
+                                      offset  = randomR (-1.5 ,1.5) rndGen
+                                      rndLife = randomR (0.4, 0.8) (snd offset)
+
 --Explosion particles rndGen, Float, [Particle], Point
 explosionParticles :: RandomGen g => g -> Float -> Point -> ([Particle],g)
 explosionParticles rndGen 0 pos      = ([],rndGen)
@@ -249,14 +266,14 @@ explosionParticles rndGen amount pos = (newParticle : (fst otherexppar), snd oth
                                                             pPos = pos,
                                                             pVelocity = (fst rndVel) ./ (max 1.0 (lengthP $ fst rndVel)) .* 3,
                                                             pColor = makeColor (fst rndR) (fst rndG) 0.0 (fst rndA),
-                                                            pTimer = fst rndTime,
+                                                            pTimer = fst rndLife,
                                                             pSize = 10
                                                             }
-                                              rndVel = randomP (-1, 1) (-1,1) rndGen
-                                              rndTime = randomR (0.3, 1.0 :: Float) (snd rndVel)
-                                              rndR = randomR (0.6, 1.0 :: Float)  (snd rndTime)
-                                              rndG = randomR (0.0, 0.3 :: Float) (snd rndR)
-                                              rndA = randomR (0.4, 0.7 :: Float) (snd rndG)
+                                              rndVel  = randomP (-1, 1) (-1,1) rndGen
+                                              rndLife = randomR (0.3, 1.0 :: Float) (snd rndVel)
+                                              rndR    = randomR (0.6, 1.0 :: Float)  (snd rndLife)
+                                              rndG    = randomR (0.0, 0.3 :: Float) (snd rndR)
+                                              rndA    = randomR (0.4, 0.7 :: Float) (snd rndG)
 															
 -- | Helper functions
 
