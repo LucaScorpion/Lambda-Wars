@@ -5,8 +5,8 @@ Lambda Wars is an asteroids-like game made in Haskell, using the [Gloss graphics
 We made it for an assignment for uni, but because it worked out quite nice we decided to put it on GitHub.
 
 ###Made by:
-- Dwight Peters
-- Luca Scalzotto
+- [Dwight Peters](https://github.com/Dwightojo)
+- [Luca Scalzotto](https://github.com/LucaScorpion)
 
 ###Running the game:
 To run the game simply run "Play Lambda Wars.bat".
