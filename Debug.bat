@@ -1,12 +1,17 @@
 @echo off
 :Choice
-choice /c QRP /n /m "[Q]uit, [R]ebuild, or [P]lay?"
-if errorlevel 3 goto Play
+choice /c QBCP /n /m "[Q]uit, [B]uild, [C]opy resources, or [P]lay?"
+if errorlevel 4 goto Play
+if errorlevel 3 goto Copy
 if errorlevel 2 goto Build
 if errorlevel 1 goto End
 :Build
 @echo Building Lambda Wars
 cabal install
+goto Choice
+:Copy
+@echo Copying resources
+xcopy /s /i ".\src\Resources" ".\dist\Build\lambda-wars\lambda-wars-tmp\Resources"
 goto Choice
 :Play
 @echo Starting Lambda Wars

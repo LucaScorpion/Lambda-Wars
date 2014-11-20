@@ -10,13 +10,13 @@ We made it for an assignment for uni, but because it worked out quite nice we de
 
 ###Running the game (simple):
 Make sure you have the Haskell platform installed: [download here](https://www.haskell.org/platform/).  
-Extract Lambda-Wars.zip, this contains the last (stable) version of the game.  
+Download and extract [Lambda-Wars.zip from Mediafire](http://www.mediafire.com/download/xiewznue7n41d78/Lambda-Wars.zip), this contains the latest (stable) version of the game.  
 Run lambda-wars.exe, and play!  
 
 ###Running the game (latest commit):
 If you have the Haskell platform and Gloss installed, run "Play Lambda Wars.bat".
 This is a simple batch file which will automatically build the game and copy all resources.
-Note: this builds the game from the last commit, and thus may contain bugs etc.
+Note: this builds the game from the last commit, which may contain bugs etc.
 
 ###Controls:
 Thrust: Arrow key up  
